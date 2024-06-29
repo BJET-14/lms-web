@@ -19,7 +19,7 @@ const Navigation = () => {
     <div data-theme="light" className="navbar bg-base-100">
       <div className="navbar-start">
         <Link href="/" className="btn btn-ghost normal-case text-xl">
-          <b>RestoBotics</b>
+          <b>LMS</b>
         </Link>
       </div>
       <div className="navbar-end">
@@ -45,23 +45,13 @@ const Navigation = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/product" onClick={toggleMenu}>
-                    Product
+                  <Link href="/authorization" onClick={toggleMenu}>
+                    Login/SignUp
                   </Link>
                 </li>
                 <li>
-                  <Link href="/innovation" onClick={toggleMenu}>
-                    Innovation
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" onClick={toggleMenu}>
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/news" onClick={toggleMenu}>
-                    News
+                  <Link href="/coursemanagement" onClick={toggleMenu}>
+                    CourseManagement
                   </Link>
                 </li>
               </ul>
@@ -74,16 +64,14 @@ const Navigation = () => {
               <Link href="/">Home</Link>
             </li>
             <li>
-              <Link href="/product">Product</Link>
+              <Link href="/authorization" onClick={toggleMenu}>
+                Login/SignUp
+              </Link>
             </li>
             <li>
-              <Link href="/innovation">Innovation</Link>
-            </li>
-            <li>
-              <Link href="/about">About</Link>
-            </li>
-            <li>
-              <Link href="/news">News</Link>
+              <Link href="/coursemanagement" onClick={toggleMenu}>
+                CourseManagement
+              </Link>
             </li>
           </ul>
         </div>
