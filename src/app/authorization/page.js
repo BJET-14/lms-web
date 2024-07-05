@@ -1,7 +1,8 @@
-'use client'
+"use client"
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { authService } from '../utils/api'  // Adjust the import path as needed
+import Cookies from 'js-cookie'
 
 const Authorization = () => {
   const router = useRouter()
@@ -25,12 +26,12 @@ const Authorization = () => {
     try {
       const result = await authService.login(formData)
       console.log('Login successful:', result)
-      // Redirect based on role
-      if (result.role === 'ADMIN') {
-        router.push('/admin-dashboard')
-      } else {
-        router.push('/user-dashboard')
-      }
+      
+      // Save role in cookie
+      Cookies.set('userRole', result.role, { expires: 7 }) // expires in 7 days
+      
+      // Redirect to dashboard
+      router.push('/dashboard')
     } catch (error) {
       console.error('Login failed:', error)
       setError('Login failed. Please check your credentials.')
@@ -39,7 +40,7 @@ const Authorization = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
-      <div className="card w-full max-w-md bg-gray-50 shadow-xl">
+      <div className="card w-full max-w-md bg-white shadow-xl">
         <div className="card-body">
           <h2 className="card-title justify-center text-2xl font-bold text-black">Login</h2>
           <form onSubmit={handleSubmit}>
