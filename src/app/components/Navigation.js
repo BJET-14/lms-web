@@ -30,7 +30,7 @@ const Navigation = () => {
             </svg>
           </label>
           {isOpen && (
-            <div className="fixed inset-0 bg-base-100 z-50">
+            <div className="fixed inset-0 bg-base-100 z-50 lg:hidden">
               <div className="navbar-end absolute top-0 right-0 p-4 w-full pl-[85%]">
                 <button className="btn btn-ghost" onClick={toggleMenu}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -40,20 +40,32 @@ const Navigation = () => {
               </div>
               <ul className="menu menu-compact flex flex-col items-center justify-center h-full text-3xl gap-y-5">
                 <li>
-                  <Link href="/" onClick={toggleMenu}>
-                    Home
+                  <Link href="/dashboard" onClick={toggleMenu}>
+                    DashBoard
                   </Link>
                 </li>
                 <li>
-                  <Link href="/authorization" onClick={toggleMenu}>
+                  <Link href="/profile" onClick={toggleMenu}>
+                    Profile
+                  </Link>
+                </li>
+                {/* <li>
+                  <Link href="/" onClick={toggleMenu}>
                     Login/SignUp
+                  </Link>
+                </li> */}
+                <li>
+                  <Link href="/signup" onClick={toggleMenu}>
+                    Create User
                   </Link>
                 </li>
                 <li>
                   <Link href="/coursemanagement" onClick={toggleMenu}>
-                    CourseManagement
+                    Course Management
                   </Link>
                 </li>
+
+
               </ul>
             </div>
           )}
@@ -61,22 +73,32 @@ const Navigation = () => {
         <div className="hidden lg:flex">
           <ul className="menu menu-horizontal p-0 text-lg gap-x-5">
             <li>
-              <Link href="/">Home</Link>
+              <Link href="/dashboard">DashBoard</Link>
+            </li>
+            {/* <li>
+              <Link href="/" onClick={toggleMenu}>
+                Login/SignUp
+              </Link>
+            </li> */}
+            <li>
+              <Link href="/profile" onClick={toggleMenu}>
+                Profile
+              </Link>
             </li>
             <li>
-              <Link href="/authorization" onClick={toggleMenu}>
-                Login/SignUp
+              <Link href="/signup" onClick={toggleMenu}>
+                Create User
               </Link>
             </li>
             <li>
               <Link href="/coursemanagement" onClick={toggleMenu}>
-                CourseManagement
+                Course Management
               </Link>
             </li>
           </ul>
         </div>
       </div>
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* <div className="fixed bottom-6 right-6 z-50">
         <button
           className="btn btn-circle bg-white text-black hover:bg-gray-200"
           onClick={toggleFloating}
@@ -97,7 +119,7 @@ const Navigation = () => {
             </a>
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };
