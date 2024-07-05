@@ -11,7 +11,7 @@ const SignUp = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'USER'  // Default role, change as needed
+    role: ''  // Default role
   })
   const [error, setError] = useState('')
 
@@ -117,6 +117,22 @@ const SignUp = () => {
                 className="input input-bordered bg-white text-black" 
                 required 
               />
+            </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-black">Role</span>
+              </label>
+              <select 
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="select select-bordered bg-white text-black"
+                required
+              >
+                <option value="ADMIN">Admin</option>
+                <option value="TEACHER">Teacher</option>
+                <option value="STUDENT">Student</option>
+              </select>
             </div>
             {error && <div className="text-red-500 mt-2">{error}</div>}
             <div className="form-control mt-6">

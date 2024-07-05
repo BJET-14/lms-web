@@ -1,11 +1,9 @@
 "use client"
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { authService } from '../utils/api'  // Adjust the import path as needed
 import Cookies from 'js-cookie'
 
 const Authorization = () => {
-  const router = useRouter()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -30,8 +28,8 @@ const Authorization = () => {
       // Save role in cookie
       Cookies.set('userRole', result.role, { expires: 7 }) // expires in 7 days
       
-      // Redirect to dashboard
-      router.push('/dashboard')
+      // Redirect to dashboard with a full page reload
+      window.location.href = '/dashboard'
     } catch (error) {
       console.error('Login failed:', error)
       setError('Login failed. Please check your credentials.')
