@@ -38,7 +38,7 @@ const Authorization = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
-      <div className="card w-full max-w-md bg-white shadow-xl">
+      <div className="card w-full max-w-md bg-gray-50 shadow-xl">
         <div className="card-body">
           <h2 className="card-title justify-center text-2xl font-bold text-black">Login</h2>
           <form onSubmit={handleSubmit}>
