@@ -8,7 +8,16 @@ const Authorization = () => {
     email: '',
     password: '',
   })
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+    general: ''
+  })
+
+  const validateEmail = (email) => {
+    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -16,11 +25,28 @@ const Authorization = () => {
       ...prevState,
       [name]: value
     }))
+    
+    // Clear the error when the user starts typing
+    setErrors(prevErrors => ({
+      ...prevErrors,
+      [name]: '',
+      general: ''
+    }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
+    setErrors({ email: '', password: '', general: '' })
+
+    // Validate email
+    if (!validateEmail(formData.email)) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        email: 'Please enter a valid email address'
+      }))
+      return
+    }
+
     try {
       const result = await authService.login(formData)
       console.log('Login successful:', result)
@@ -32,7 +58,10 @@ const Authorization = () => {
       window.location.href = '/dashboard'
     } catch (error) {
       console.error('Login failed:', error)
-      setError('Login failed. Please check your credentials.')
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        general: 'Login failed. Please check your credentials.'
+      }))
     }
   }
 
@@ -51,9 +80,10 @@ const Authorization = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="input input-bordered bg-white text-black" 
+                className={`input input-bordered bg-white text-black ${errors.email ? 'input-error' : ''}`}
                 required 
               />
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
             <div className="form-control">
               <label className="label">
@@ -68,7 +98,7 @@ const Authorization = () => {
                 required 
               />
             </div>
-            {error && <div className="text-red-500 mt-2">{error}</div>}
+            {errors.general && <div className="text-red-500 mt-2">{errors.general}</div>}
             <div className="form-control mt-6">
               <button type="submit" className="btn btn-primary text-white">
                 Login

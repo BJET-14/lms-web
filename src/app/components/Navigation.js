@@ -2,14 +2,24 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
+import { authService } from '../utils/api';  // Adjust the import path as needed
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [navItems, setNavItems] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const userRole = Cookies.get('userRole');
-    setNavItems(getNavigationByRole(userRole));
+    if (userRole) {
+      setIsLoggedIn(true);
+      setNavItems(getNavigationByRole(userRole));
+    } else {
+      setIsLoggedIn(false);
+      setNavItems([]);
+    }
   }, []);
 
   const getNavigationByRole = (role) => {
@@ -41,10 +51,17 @@ const Navigation = () => {
     setIsOpen(!isOpen);
   };
 
+  const handleLogout = () => {
+    authService.logout();
+    setIsLoggedIn(false);
+    setNavItems([]);
+    router.push('/');  // Redirect to home page after logout
+  };
+
   return (
     <div data-theme="light" className="navbar bg-base-100">
       <div className="navbar-start">
-        <Link href="/" className="btn btn-ghost normal-case text-xl">
+        <Link href="/dashboard" className="btn btn-ghost normal-case text-xl">
           <b>LMS</b>
         </Link>
       </div>
@@ -72,6 +89,11 @@ const Navigation = () => {
                     </Link>
                   </li>
                 ))}
+                {isLoggedIn && (
+                  <li>
+                    <button onClick={() => { handleLogout(); toggleMenu(); }}>Logout</button>
+                  </li>
+                )}
               </ul>
             </div>
           )}
@@ -83,6 +105,11 @@ const Navigation = () => {
                 <Link href={item.path}>{item.name}</Link>
               </li>
             ))}
+            {isLoggedIn && (
+              <li>
+                <button onClick={handleLogout} className="btn btn-ghost text-xl -mt-1">Logout</button>
+              </li>
+            )}
           </ul>
         </div>
       </div>
