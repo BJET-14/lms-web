@@ -2,36 +2,70 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_BASE_URL = 'http://localhost:8055';
+let API_CONFIG = null;
+let axiosInstance = null;
 
-const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 5000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_BASE_URL || '';
+};
+
+const loadConfig = async () => {
+  const baseUrl = getBaseUrl();
+  const configUrl = `${baseUrl}/config.json`;
+  const response = await fetch(configUrl);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  API_CONFIG = await response.json();
+  initializeAxios();
+};
+
+const initializeAxios = () => {
+  if (!API_CONFIG || !API_CONFIG.API_BASE_URL) {
+    throw new Error('Invalid API configuration');
+  }
+  axiosInstance = axios.create({
+    baseURL: API_CONFIG.API_BASE_URL,
+    timeout: API_CONFIG.API_TIMEOUT,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+};
+
+const apiCall = async (method, ...args) => {
+  if (!axiosInstance) {
+    await loadConfig();
+  }
+  return axiosInstance[method](...args);
+};
 
 export const api = {
   auth: {
-    register: (userData) => axiosInstance.post('/auth/registration', userData),
-    login: (credentials) => axiosInstance.post('/auth/login', credentials),
+    register: (userData) => apiCall('post', '/auth/registration', userData),
+    login: (credentials) => apiCall('post', '/auth/login', credentials),
   },
-  // Add more API endpoints here as needed
 };
 
 export const setAuthToken = (token) => {
   if (token) {
     localStorage.setItem('token', token);
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    if (axiosInstance) {
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
   } else {
     localStorage.removeItem('token');
-    delete axiosInstance.defaults.headers.common['Authorization'];
+    if (axiosInstance) {
+      delete axiosInstance.defaults.headers.common['Authorization'];
+    }
   }
 };
 
 export const setUserRole = (role) => {
-  Cookies.set('userRole', role, { expires: 7 }); // expires in 7 days
+  Cookies.set('userRole', role, { expires: 7 });
 };
 
 export const getUserRole = () => {
@@ -40,31 +74,23 @@ export const getUserRole = () => {
 
 export const authService = {
   register: async (userData) => {
-    try {
-      const response = await api.auth.register(userData);
-      return response.data;
-    } catch (error) {
-      console.error('Registration failed:', error);
-      throw error;
-    }
+    const response = await api.auth.register(userData);
+    return response.data;
   },
   login: async (credentials) => {
-    try {
-      const response = await api.auth.login(credentials);
-      if (response.data.token) {
-        setAuthToken(response.data.token);
-      }
-      if (response.data.role) {
-        setUserRole(response.data.role);
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
+    const response = await api.auth.login(credentials);
+    if (response.data.token) {
+      setAuthToken(response.data.token);
     }
+    if (response.data.role) {
+      setUserRole(response.data.role);
+    }
+    return response.data;
   },
   logout: () => {
     setAuthToken(null);
     Cookies.remove('userRole');
   },
 };
+
+export const reinitializeApi = loadConfig;

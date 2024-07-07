@@ -33,7 +33,7 @@ const Navigation = () => {
         return [
           { name: 'Dashboard', path: '/dashboard' },
           { name: 'Profile', path: '/profile' },
-          { name: 'Create User', path: '/signup' },
+          { name: 'Users', path: '/signup' },
           { name: 'Course Management', path: '/coursemanagement' }
         ];
       case 'TEACHER':
