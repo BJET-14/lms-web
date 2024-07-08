@@ -1,24 +1,67 @@
 'use client'
 import Link from 'next/link';
-import { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
+import { authService } from '../utils/api';  // Adjust the import path as needed
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isFloatingOpen, setIsFloatingOpen] = useState(true);
+  const [navItems, setNavItems] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const userRole = Cookies.get('userRole');
+    if (userRole) {
+      setIsLoggedIn(true);
+      setNavItems(getNavigationByRole(userRole));
+    } else {
+      setIsLoggedIn(false);
+      setNavItems([]);
+    }
+  }, []);
+
+  const getNavigationByRole = (role) => {
+    switch (role) {
+      case 'STUDENT':
+        return [
+          { name: 'Dashboard', path: '/dashboard' },
+          { name: 'Profile', path: '/profile' }
+        ];
+      case 'ADMIN':
+        return [
+          { name: 'Dashboard', path: '/dashboard' },
+          { name: 'Profile', path: '/profile' },
+          { name: 'Users', path: '/signup' },
+          { name: 'Course Management', path: '/coursemanagement' }
+        ];
+      case 'TEACHER':
+        return [
+          { name: 'Dashboard', path: '/dashboard' },
+          { name: 'Profile', path: '/profile' },
+          { name: 'Course Management', path: '/coursemanagement' }
+        ];
+      default:
+        return [];
+    }
+  };
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
-  const toggleFloating = () => {
-    setIsFloatingOpen(!isFloatingOpen);
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsLoggedIn(false);
+    setNavItems([]);
+    router.push('/');  // Redirect to home page after logout
   };
 
   return (
     <div data-theme="light" className="navbar bg-base-100">
       <div className="navbar-start">
-        <Link href="/" className="btn btn-ghost normal-case text-xl">
+        <Link href="/dashboard" className="btn btn-ghost normal-case text-xl">
           <b>LMS</b>
         </Link>
       </div>
@@ -30,7 +73,7 @@ const Navigation = () => {
             </svg>
           </label>
           {isOpen && (
-            <div className="fixed inset-0 bg-base-100 z-50">
+            <div className="fixed inset-0 bg-base-100 z-50 lg:hidden">
               <div className="navbar-end absolute top-0 right-0 p-4 w-full pl-[85%]">
                 <button className="btn btn-ghost" onClick={toggleMenu}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -39,64 +82,36 @@ const Navigation = () => {
                 </button>
               </div>
               <ul className="menu menu-compact flex flex-col items-center justify-center h-full text-3xl gap-y-5">
-                <li>
-                  <Link href="/" onClick={toggleMenu}>
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/authorization" onClick={toggleMenu}>
-                    Login/SignUp
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/coursemanagement" onClick={toggleMenu}>
-                    CourseManagement
-                  </Link>
-                </li>
+                {navItems.map((item, index) => (
+                  <li key={index}>
+                    <Link href={item.path} onClick={toggleMenu}>
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+                {isLoggedIn && (
+                  <li>
+                    <button onClick={() => { handleLogout(); toggleMenu(); }}>Logout</button>
+                  </li>
+                )}
               </ul>
             </div>
           )}
         </div>
         <div className="hidden lg:flex">
           <ul className="menu menu-horizontal p-0 text-lg gap-x-5">
-            <li>
-              <Link href="/">Home</Link>
-            </li>
-            <li>
-              <Link href="/authorization" onClick={toggleMenu}>
-                Login/SignUp
-              </Link>
-            </li>
-            <li>
-              <Link href="/coursemanagement" onClick={toggleMenu}>
-                CourseManagement
-              </Link>
-            </li>
+            {navItems.map((item, index) => (
+              <li key={index}>
+                <Link href={item.path}>{item.name}</Link>
+              </li>
+            ))}
+            {isLoggedIn && (
+              <li>
+                <button onClick={handleLogout} className="btn btn-ghost text-xl -mt-1">Logout</button>
+              </li>
+            )}
           </ul>
         </div>
-      </div>
-      <div className="fixed bottom-6 right-6 z-50">
-        <button
-          className="btn btn-circle bg-white text-black hover:bg-gray-200"
-          onClick={toggleFloating}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-        </button>
-        {isFloatingOpen && (
-          <div className="absolute bottom-16 right-0 flex flex-col space-y-2">
-            <a href="mailto:your@email.com" className="btn bg-white text-black hover:bg-gray-200 flex items-center">
-              <span className="mr-2">Email</span>
-              <FontAwesomeIcon icon={faEnvelope} />
-            </a>
-            <a href="https://facebook.com/yourpage" target="_blank" rel="noopener noreferrer" className="btn bg-white text-black hover:bg-gray-200 flex flex-row items-center w-[150px]">
-              <span className="mr-2">Facebook</span>
-              <FontAwesomeIcon icon={faBook} />
-            </a>
-          </div>
-        )}
       </div>
     </div>
   );
