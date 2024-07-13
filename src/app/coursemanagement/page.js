@@ -17,7 +17,7 @@ const CourseManagement = () => {
         }
 
         const response = await axios.get(
-          "http://localhost:8055/operations/courses?asPage=false&page=0&size=20",
+          `http://localhost:8055/operations/courses?asPage=false&page=0&size=20&title=${searchQuery}`, // Update the API URL to include search query
           {
             headers: {
               accept: "*/*",
@@ -36,7 +36,10 @@ const CourseManagement = () => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    setSearchQuery(e.target.search.value.trim()); // Update the search query state
+    const searchValue = e.target.search.value.trim();
+    setSearchQuery(searchValue);
+    fetchCourses(searchValue); // Call fetchCourses with the new search query
+    //setSearchQuery(e.target.search.value.trim()); // Update the search query state
   };
 
   return (
