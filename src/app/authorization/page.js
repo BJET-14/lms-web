@@ -52,8 +52,9 @@ const Authorization = () => {
       console.log('Login successful:', result)
       
       // Save role in cookie
-      Cookies.set('userRole', result.role, { expires: 7 }) // expires in 7 days
-      
+      // Cookies.set('userRole', result.role, { expires: 7 }) // expires in 7 days
+      //Cookies.set('authToken', result.token, { expires: 7 }); // expires in 7 days
+      console.log(result.access_token);
       // Redirect to dashboard with a full page reload
       window.location.href = '/dashboard'
     } catch (error) {

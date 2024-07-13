@@ -51,25 +51,20 @@ export const api = {
 };
 
 export const setAuthToken = (token) => {
-  if (token) {
-    localStorage.setItem('token', token);
-    if (axiosInstance) {
-      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-  } else {
-    localStorage.removeItem('token');
-    if (axiosInstance) {
-      delete axiosInstance.defaults.headers.common['Authorization'];
-    }
-  }
+  Cookies.set("access_token", token,{ expires: 7 })
 };
 
 export const setUserRole = (role) => {
   Cookies.set('userRole', role, { expires: 7 });
+  
 };
 
 export const getUserRole = () => {
   return Cookies.get('userRole');
+};
+
+export const getAuthToken = () => {
+  return Cookies.get('access_token');
 };
 
 export const authService = {
@@ -88,8 +83,8 @@ export const authService = {
     return response.data;
   },
   logout: () => {
-    setAuthToken(null);
     Cookies.remove('userRole');
+    Cookies.remove('access_token');
   },
 };
 

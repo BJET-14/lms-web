@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'; // Assuming you use axios for HTTP requests
-
+import Cookies from 'js-cookie'
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
 
@@ -9,12 +9,18 @@ const CourseManagement = () => {
     // Function to fetch course data
     const fetchCourses = async () => {
       try {
+        const authToken = Cookies.get('access_token');
+        if (!authToken) {
+          console.error('No authentication token found');
+          return;
+        }
+        
         const response = await axios.get(
           'http://localhost:8055/operations/courses?asPage=false&page=0&size=20',
           {
             headers: {
               'accept': '*/*',
-              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdWpvbkBnbWFpbC5jb20iLCJpYXQiOjE3MjAzODIyMTgsImV4cCI6MTcyMDQ2ODYxOH0.vVwFxgZxMS2tlHQHeqH5cEbgN_2_yJwCTINJP0PnzzY'
+              'Authorization': `Bearer ${authToken}`
             }
           }
         );
