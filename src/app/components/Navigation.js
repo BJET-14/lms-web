@@ -27,7 +27,8 @@ const Navigation = () => {
       case 'STUDENT':
         return [
           { name: 'Dashboard', path: '/dashboard' },
-          { name: 'Profile', path: '/profile' }
+          { name: 'Profile', path: '/profile' },
+          { name: 'Courses', path: '/student_courseview' }
         ];
       case 'ADMIN':
         return [

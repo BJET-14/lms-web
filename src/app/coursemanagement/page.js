@@ -3,6 +3,17 @@ import React, { useState, useEffect } from "react";
 import axios from "axios"; // Assuming you use axios for HTTP requests
 import Cookies from "js-cookie";
 import { getAuthToken } from "../utils/api";
+
+const teachers = [
+  "Ms. Johnson",
+  "Mr. Thompson",
+  "Dr. Lee",
+  "Prof. Patel",
+  "Ms. Rodriguez",
+  "Dr. Brown",
+];
+
+
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState(""); // Add a state for search query
@@ -43,42 +54,54 @@ const CourseManagement = () => {
   };
 
   return (
-    <div className="py-6 ">
-      <h2 className="text-2xl font-bold mb-4 ml-6">Course Management</h2>
-      <form onSubmit={handleSearch} className="mb-4 ml-6 ">
-        <input
-          type="search"
-          name="search"
-          placeholder="Search courses"
-          className="input input-bordered w-full max-w-xs"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value.trim())}
-        />
-        <button
-          type="submit"
-          className="btn btn-outline btn-success ml-2 dark:md:hover:bg-fuchsia-600"
-        >
-          Search
-        </button>
-      </form>
-      <div className="grid grid-cols-3 gap-4 flex items-center space-x-3 mb-4 ml-6">
-        {courses.map((course) => (
-          <div
-            key={course.id}
-            className="card bg-base-100 w-96 shadow-xl ml-4 content-start "
+    <div className="flex py-6 text-zinc-950 bg-slate-200">
+      <div className="w-70% p-6 rounded-md shadow-md">
+        <h2 className="text-2xl font-bold mb-4">Course Management</h2>
+      </div>
+      <div className="p-6 rounded-md shadow-md">
+        <form onSubmit={handleSearch} className="mb-4">
+          <input
+            type="search"
+            name="search"
+            placeholder="Search courses"
+            className="input input-bordered w-full max-w-xs bg-slate-300"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value.trim())}
+          />
+          <button
+            type="submit"
+            className="btn btn-success ml-4"
           >
-            <div className="card-body ">
-              <h3 className="card-title">{course.title}</h3>
-              <p>Description: {course.description}</p>
-              <p>Start Date: {course.startDate}</p>
-
-              <div class="card-actions justify-end">
-                <button class="btn btn-outline btn-info">Update</button>
-                <button class="btn btn-outline btn-error">Delete</button>
-              </div>
-            </div>
-          </div>
-        ))}
+            Search
+          </button>
+        </form>
+        <div className="overflow-x-auto">
+          <table className="table w-full bg-slate-200">
+            <thead className="text-zinc-950">
+              <tr>
+                <th>Title</th>
+                <th>Faculty</th>
+                <th>Start Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {courses.map((course, index) => (
+                <tr key={course.id}>
+                  <td>{course.title}</td>
+                  <td>{teachers[index % teachers.length]}</td>
+                  <td>{course.startDate}</td>
+                  <td>
+                    <button className="btn btn-outline btn-info">Update</button>
+                    <button className="btn btn-outline btn-error ml-5">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
