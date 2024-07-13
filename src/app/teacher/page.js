@@ -44,7 +44,7 @@ function Teacher() {
 
     if (isEditing) {
       const updatedItems = state.map((item, index) =>
-          index === currentEditIndex ? formData : item
+        index === currentEditIndex ? formData : item
       );
       setState(updatedItems);
       setIsEditing(false);
@@ -90,279 +90,264 @@ function Teacher() {
     const timeDiff = Math.abs(to - from);
     const years = Math.floor(timeDiff / (1000 * 60 * 60 * 24 * 365));
     const months = Math.floor(
-        (timeDiff % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24 * 30)
+      (timeDiff % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24 * 30)
     );
     return `${years} years, ${months} months`;
   };
 
   return (
-      <div className="text-white bg-black min-h-screen p-4">
-        <h2 className="text-xl font-semibold mb-2">Update Teacher Profile</h2>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white text-gray-800 p-8">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-3xl font-bold mb-8 text-center text-black">Update Teacher Profile</h2>
 
         {/* Academic Results */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Academic Result</h3>
-          <div className="flex flex-col gap-4 mb-4">
+        <div className="mb-12 bg-white p-6 rounded-lg shadow-lg">
+          <h3 className="text-2xl font-semibold mb-4 text-black">Academic Result</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <input
-                type="text"
-                name="examName"
-                value={formData.examName}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
-                placeholder="Exam Name"
+              type="text"
+              name="examName"
+              value={formData.examName}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
+              placeholder="Exam Name"
             />
             <input
-                type="text"
-                name="passingYear"
-                value={formData.passingYear}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
-                placeholder="Passing Year"
+              type="text"
+              name="passingYear"
+              value={formData.passingYear}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
+              placeholder="Passing Year"
             />
             <input
-                type="text"
-                name="result"
-                value={formData.result}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
-                placeholder="Result"
+              type="text"
+              name="result"
+              value={formData.result}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
+              placeholder="Result"
             />
             <input
-                type="text"
-                name="instituteName"
-                value={formData.instituteName}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
-                placeholder="Institute Name"
+              type="text"
+              name="instituteName"
+              value={formData.instituteName}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
+              placeholder="Institute Name"
             />
-            <button
-                onClick={() => addOrEditItem("results")}
-                className="bg-blue-500 text-white px-4 py-2 self-end"
-            >
-              {isEditing && editSection === "results" ? "Update" : "Add"}
-            </button>
           </div>
+          <button
+            onClick={() => addOrEditItem("results")}
+            className="btn btn-primary w-full md:w-auto"
+          >
+            {isEditing && editSection === "results" ? "Update" : "Add"} Result
+          </button>
           {results.length > 0 && (
-              <table className="min-w-full bg-gray-900 mt-4 border-collapse">
+            <div className="overflow-x-auto mt-6">
+              <table className="table w-full">
                 <thead>
-                <tr>
-                  <th className="py-2 px-4 border text-white">Exam Name</th>
-                  <th className="py-2 px-4 border text-white">Passing Year</th>
-                  <th className="py-2 px-4 border text-white">Result</th>
-                  <th className="py-2 px-4 border text-white">Institute Name</th>
-                  <th className="py-2 px-4 border text-white">Actions</th>
-                </tr>
+                  <tr className="bg-gray-100">
+                    <th>Exam Name</th>
+                    <th>Passing Year</th>
+                    <th>Result</th>
+                    <th>Institute Name</th>
+                    <th>Actions</th>
+                  </tr>
                 </thead>
                 <tbody>
-                {results.map((result, index) => (
-                    <tr key={index}>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {result.examName}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {result.passingYear}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {result.result}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {result.instituteName}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
+                  {results.map((result, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td>{result.examName}</td>
+                      <td>{result.passingYear}</td>
+                      <td>{result.result}</td>
+                      <td>{result.instituteName}</td>
+                      <td>
                         <button
-                            onClick={() => editItem("results", index)}
-                            className="bg-yellow-500 text-white px-2 py-1"
+                          onClick={() => editItem("results", index)}
+                          className="btn btn-xs btn-warning"
                         >
                           Edit
                         </button>
                       </td>
                     </tr>
-                ))}
+                  ))}
                 </tbody>
               </table>
+            </div>
           )}
         </div>
 
         {/* Experiences */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Experience</h3>
-          <div className="flex flex-col gap-4 mb-4">
+        <div className="mb-12 bg-white p-6 rounded-lg shadow-lg">
+          <h3 className="text-2xl font-semibold mb-4 text-black">Experience</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <input
-                type="text"
-                name="jobTitle"
-                value={formData.jobTitle}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
-                placeholder="Job Title"
+              type="text"
+              name="jobTitle"
+              value={formData.jobTitle}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
+              placeholder="Job Title"
             />
             <input
-                type="text"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
-                placeholder="Company Name"
+              type="text"
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
+              placeholder="Company Name"
             />
             <input
-                type="date"
-                name="fromDate"
-                value={formData.fromDate}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
+              type="date"
+              name="fromDate"
+              value={formData.fromDate}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
             />
             <input
-                type="date"
-                name="toDate"
-                value={formData.toDate}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
-                disabled={formData.currentlyWorking}
+              type="date"
+              name="toDate"
+              value={formData.toDate}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
+              disabled={formData.currentlyWorking}
             />
-            <label className="flex items-center text-white">
+            <label className="flex items-center text-gray-700">
               <input
-                  type="checkbox"
-                  name="currentlyWorking"
-                  checked={formData.currentlyWorking}
-                  onChange={handleInputChange}
-                  className="mr-2"
+                type="checkbox"
+                name="currentlyWorking"
+                checked={formData.currentlyWorking}
+                onChange={handleInputChange}
+                className="checkbox checkbox-primary mr-2"
               />
-              Currently Working
+              <span>Currently Working</span>
             </label>
-            <button
-                onClick={() => addOrEditItem("experiences")}
-                className="bg-blue-500 text-white px-4 py-2 self-end"
-            >
-              {isEditing && editSection === "experiences" ? "Update" : "Add"}
-            </button>
           </div>
+          <button
+            onClick={() => addOrEditItem("experiences")}
+            className="btn btn-primary w-full md:w-auto"
+          >
+            {isEditing && editSection === "experiences" ? "Update" : "Add"} Experience
+          </button>
           {experiences.length > 0 && (
-              <table className="min-w-full bg-gray-900 mt-4 border-collapse">
+            <div className="overflow-x-auto mt-6">
+              <table className="table w-full">
                 <thead>
-                <tr>
-                  <th className="py-2 px-4 border text-white">Job Title</th>
-                  <th className="py-2 px-4 border text-white">Company Name</th>
-                  <th className="py-2 px-4 border text-white">From Date</th>
-                  <th className="py-2 px-4 border text-white">To Date</th>
-                  <th className="py-2 px-4 border text-white">Experience Time</th>
-                  <th className="py-2 px-4 border text-white">Actions</th>
-                </tr>
+                  <tr className="bg-gray-100">
+                    <th>Job Title</th>
+                    <th>Company Name</th>
+                    <th>From Date</th>
+                    <th>To Date</th>
+                    <th>Experience Time</th>
+                    <th>Actions</th>
+                  </tr>
                 </thead>
                 <tbody>
-                {experiences.map((experience, index) => (
-                    <tr key={index}>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {experience.jobTitle}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {experience.companyName}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {experience.fromDate}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {experience.currentlyWorking ? "Present" : experience.toDate}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
+                  {experiences.map((experience, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td>{experience.jobTitle}</td>
+                      <td>{experience.companyName}</td>
+                      <td>{experience.fromDate}</td>
+                      <td>{experience.currentlyWorking ? "Present" : experience.toDate}</td>
+                      <td>
                         {calculateExperienceTime(
-                            experience.fromDate,
-                            experience.toDate,
-                            experience.currentlyWorking
+                          experience.fromDate,
+                          experience.toDate,
+                          experience.currentlyWorking
                         )}
                       </td>
-                      <td className="py-2 px-4 border text-center text-white">
+                      <td>
                         <button
-                            onClick={() => editItem("experiences", index)}
-                            className="bg-yellow-500 text-white px-2 py-1"
+                          onClick={() => editItem("experiences", index)}
+                          className="btn btn-xs btn-warning"
                         >
                           Edit
                         </button>
                       </td>
                     </tr>
-                ))}
+                  ))}
                 </tbody>
               </table>
+            </div>
           )}
         </div>
 
         {/* Trainings */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Training</h3>
-          <div className="flex flex-col gap-4 mb-4">
+        <div className="mb-12 bg-white p-6 rounded-lg shadow-lg">
+          <h3 className="text-2xl font-semibold mb-4 text-black">Training</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <input
-                type="text"
-                name="trainingTitle"
-                value={formData.trainingTitle}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
-                placeholder="Training Title"
+              type="text"
+              name="trainingTitle"
+              value={formData.trainingTitle}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
+              placeholder="Training Title"
             />
             <input
-                type="text"
-                name="providerName"
-                value={formData.providerName}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
-                placeholder="Provider Name"
+              type="text"
+              name="providerName"
+              value={formData.providerName}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
+              placeholder="Provider Name"
             />
             <input
-                type="date"
-                name="completionDate"
-                value={formData.completionDate}
-                onChange={handleInputChange}
-                className="border p-2 w-full bg-gray-800 text-white"
+              type="date"
+              name="completionDate"
+              value={formData.completionDate}
+              onChange={handleInputChange}
+              className="input input-bordered w-full bg-gray-50"
             />
-            <button
-                onClick={() => addOrEditItem("trainings")}
-                className="bg-blue-500 text-white px-4 py-2 self-end"
-            >
-              {isEditing && editSection === "trainings" ? "Update" : "Add"}
-            </button>
           </div>
+          <button
+            onClick={() => addOrEditItem("trainings")}
+            className="btn btn-primary w-full md:w-auto"
+          >
+            {isEditing && editSection === "trainings" ? "Update" : "Add"} Training
+          </button>
           {trainings.length > 0 && (
-              <table className="min-w-full bg-gray-900 mt-4 border-collapse">
+            <div className="overflow-x-auto mt-6">
+              <table className="table w-full">
                 <thead>
-                <tr>
-                  <th className="py-2 px-4 border text-white">Training Title</th>
-                  <th className="py-2 px-4 border text-white">Provider Name</th>
-                  <th className="py-2 px-4 border text-white">Completion Date</th>
-                  <th className="py-2 px-4 border text-white">Actions</th>
-                </tr>
+                  <tr className="bg-gray-100">
+                    <th>Training Title</th>
+                    <th>Provider Name</th>
+                    <th>Completion Date</th>
+                    <th>Actions</th>
+                  </tr>
                 </thead>
                 <tbody>
-                {trainings.map((training, index) => (
-                    <tr key={index}>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {training.trainingTitle}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {training.providerName}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
-                        {training.completionDate}
-                      </td>
-                      <td className="py-2 px-4 border text-center text-white">
+                  {trainings.map((training, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td>{training.trainingTitle}</td>
+                      <td>{training.providerName}</td>
+                      <td>{training.completionDate}</td>
+                      <td>
                         <button
-                            onClick={() => editItem("trainings", index)}
-                            className="bg-yellow-500 text-white px-2 py-1"
+                          onClick={() => editItem("trainings", index)}
+                          className="btn btn-xs btn-warning"
                         >
                           Edit
                         </button>
                       </td>
                     </tr>
-                ))}
+                  ))}
                 </tbody>
               </table>
+            </div>
           )}
-          <div className="flex justify-center mt-4">
-            <button
-                onClick={addOrEditItem}
-                className="bg-blue-500 text-white px-4 py-2"
-            >
-              Update My Profile
-            </button>
-          </div>
+        </div>
+
+        <div className="flex justify-center mt-8">
+          <button onClick={addOrEditItem} className="btn btn-lg btn-success">
+            Update My Profile
+          </button>
         </div>
       </div>
+    </div>
   );
 }
+
 export default Teacher;
