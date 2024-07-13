@@ -1,7 +1,7 @@
 "use client"
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { authService } from '../utils/api'  // Adjust the import path as needed
+import { authService, userService } from '../utils/api'  // Adjust the import path as needed
 
 const SignUp = () => {
   const router = useRouter()
@@ -43,7 +43,7 @@ const SignUp = () => {
     }))
   }
 
-  const validateForm = () => {
+  const validateForm = async () => {
     let isValid = true
     let newErrors = {}
 
@@ -60,6 +60,19 @@ const SignUp = () => {
     if (!validateEmail(formData.email)) {
       newErrors.email = 'Please enter a valid email address'
       isValid = false
+    } else {
+      // Check if email already exists
+      try {
+        const emailExists = await userService.checkUserExist(formData.email)
+        if (emailExists) {
+          newErrors.email = 'This email is already in use'
+          isValid = false
+        }
+      } catch (error) {
+        console.error('Error checking email existence:', error)
+        newErrors.email = 'Unable to verify email. Please try again.'
+        isValid = false
+      }
     }
 
     if (formData.password.length < 2) {
@@ -84,14 +97,14 @@ const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!validateForm()) {
+    if (!await validateForm()) {
       return
     }
 
     try {
       const result = await authService.register(formData)
       console.log('Registration successful:', result)
-      router.push('/authorization')  // Redirect to login page after successful registration
+      router.push('/users')  // Redirect to users page after successful registration
     } catch (error) {
       console.error('Registration failed:', error)
       setErrors(prevErrors => ({
@@ -205,10 +218,6 @@ const SignUp = () => {
               <button type="submit" className="btn btn-primary text-white">Sign Up</button>
             </div>
           </form>
-          {/* <div className="text-center mt-4">
-            <span className="text-sm text-black">Already have an account?</span>
-            <a href="#" onClick={handleLoginClick} className="text-sm font-medium text-primary hover:underline ml-1">Login</a>
-          </div> */}
         </div>
       </div>
     </div>
