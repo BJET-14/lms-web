@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'; // Assuming you use axios for HTTP requests
 import Cookies from 'js-cookie'
+import { getAuthToken } from '../utils/api';
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
 
@@ -9,7 +10,7 @@ const CourseManagement = () => {
     // Function to fetch course data
     const fetchCourses = async () => {
       try {
-        const authToken = Cookies.get('access_token');
+        const authToken = getAuthToken();
         if (!authToken) {
           console.error('No authentication token found');
           return;

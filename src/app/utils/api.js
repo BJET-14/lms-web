@@ -74,8 +74,8 @@ export const authService = {
   },
   login: async (credentials) => {
     const response = await api.auth.login(credentials);
-    if (response.data.token) {
-      setAuthToken(response.data.token);
+    if (response.data.access_token) {
+      setAuthToken(response.data.access_token);
     }
     if (response.data.role) {
       setUserRole(response.data.role);
