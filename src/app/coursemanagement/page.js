@@ -56,7 +56,7 @@ const CourseManagement = () => {
         />
         <button
           type="submit"
-          className="btn btn-primary ml-2 dark:md:hover:bg-fuchsia-600"
+          className="btn btn-outline btn-success ml-2 dark:md:hover:bg-fuchsia-600"
         >
           Search
         </button>
@@ -73,8 +73,8 @@ const CourseManagement = () => {
               <p>Start Date: {course.startDate}</p>
 
               <div class="card-actions justify-end">
-                <button class="btn btn-primary">Update</button>
-                <button class="btn btn-primary">Delete</button>
+                <button class="btn btn-outline btn-info">Update</button>
+                <button class="btn btn-outline btn-error">Delete</button>
               </div>
             </div>
           </div>
