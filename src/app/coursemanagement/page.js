@@ -54,17 +54,17 @@ const CourseManagement = () => {
   };
 
   return (
-    <div className="flex py-6 text-zinc-950 bg-slate-200">
+    <div className="flex py-6 h-screen w-full text-zinc-950 bg-slate-200">
       <div className="w-70% p-6 rounded-md shadow-md">
         <h2 className="text-2xl font-bold mb-4">Course Management</h2>
       </div>
-      <div className="p-6 rounded-md shadow-md">
+      <div className="p-6 rounded-md shadow-md w-screen">
         <form onSubmit={handleSearch} className="mb-4">
           <input
             type="search"
             name="search"
             placeholder="Search courses"
-            className="input input-bordered w-full max-w-xs bg-slate-300"
+            className="input input-bordered  max-w-xs bg-slate-300"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value.trim())}
           />

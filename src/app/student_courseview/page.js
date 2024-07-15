@@ -89,7 +89,7 @@ const student_courseview = () => {
   };
 
   return (
-    <div className="flex py-6 text-zinc-950 bg-slate-200">
+    <div className="flex h-screen py-6 text-zinc-950 bg-slate-200">
       <div className="w-70% p-6 rounded-md shadow-md">
         <h2 className="text-2xl font-bold mb-4 ml-6">Courses Available</h2>
       </div>
