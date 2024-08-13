@@ -1,0 +1,26 @@
+.course-management {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .course-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .course-item {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .course-item h2 {
+    margin: 0;
+    font-size: 1.5em;
+  }
+  
+  .course-item p {
+    margin: 5px 0;
+  }
+  
