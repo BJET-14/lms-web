@@ -54,7 +54,7 @@ const CourseManagement = () => {
   };
 
   return (
-    <div className="flex py-6 h-screen w-full text-zinc-950 bg-slate-200">
+    <div className="flex py-6 h-full w-full text-zinc-950 bg-slate-200">
       <div className="w-70% p-6 rounded-md shadow-md">
         <h2 className="text-2xl font-bold mb-4">Course Management</h2>
       </div>
