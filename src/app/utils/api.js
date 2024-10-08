@@ -89,6 +89,18 @@ export const api = {
     getUserByEmail: (email) => apiCall('get', '/commons/users/email', { params: { email } }),
     checkUserExist: (email) => apiCall('get', '/commons/users/exist', { params: { email } }),
   },
+  courses: {
+    getCourses: (params) => apiCall('get', '/operations/courses', { params }),
+    addCourse: (courseData) => apiCall('post', '/operations/courses', courseData),
+    updateCourse: (id, courseData) => apiCall('put', `/operations/courses/${id}`, courseData),
+    getCourseById: (id) => apiCall('get', `/operations/courses/${id}`),
+    deleteModule: (courseId, moduleId) => apiCall('delete', `/operations/courses/${courseId}/modules/${moduleId}`),
+    assignTeacher: (courseId, teacherData) => apiCall('post', `/operations/courses/${courseId}/assign`, teacherData),
+    scheduleCourse: (courseId, scheduleData) => apiCall('post', `/operations/courses/${courseId}/schedule`, scheduleData),
+    getCourseSchedule: (courseId) => apiCall('get', `/operations/courses/${courseId}/class-schedule`),
+    getCourseById: (id) => apiCall('get', `/operations/courses/${id}`),
+
+  },
 };
 
 export const setAuthToken = (token) => {
@@ -147,6 +159,46 @@ export const userService = {
   },
   checkUserExist: async (email) => {
     const response = await api.users.checkUserExist(email);
+    return response.data;
+  },
+};
+
+export const courseService = {
+
+  getCourses: async (params = {}) => {
+    const response = await api.courses.getCourses(params);
+    return response.data;
+  },
+  addCourse: async (courseData) => {
+    const response = await api.courses.addCourse(courseData);
+    return response.data;
+  },
+  updateCourse: async (id, courseData) => {
+    const response = await api.courses.updateCourse(id, courseData);
+    return response.data;
+  },
+  getCourseById: async (id) => {
+    const response = await api.courses.getCourseById(id);
+    return response.data;
+  },
+  deleteModule: async (courseId, moduleId) => {
+    const response = await api.courses.deleteModule(courseId, moduleId);
+    return response.data;
+  },
+  assignTeacher: async (courseId, teacherData) => {
+    const response = await api.courses.assignTeacher(courseId, teacherData);
+    return response.data;
+  },
+  scheduleCourse: async (courseId, scheduleData) => {
+    const response = await api.courses.scheduleCourse(courseId, scheduleData);
+    return response.data;
+  },
+  getCourseSchedule: async (courseId) => {
+    const response = await api.courses.getCourseSchedule(courseId);
+    return response.data;
+  },
+  getCourseById: async (id) => {
+    const response = await api.courses.getCourseById(id);
     return response.data;
   },
 };

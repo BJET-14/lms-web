@@ -1,22 +1,13 @@
 "use client"
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { getAuthToken } from "../utils/api";
+import { courseService, userService } from "../utils/api";
 
-const teachers = [
-  "Ms. Johnson",
-  "Mr. Thompson",
-  "Dr. Lee",
-  "Prof. Patel",
-  "Ms. Rodriguez",
-  "Dr. Brown",
-];
-
-const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 const timeSlots = ["AM_9", "AM_11"];
 
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [newCourse, setNewCourse] = useState({
     title: "",
@@ -30,33 +21,39 @@ const CourseManagement = () => {
   const [selectedTeacher, setSelectedTeacher] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [startDateFrom, setStartDateFrom] = useState("");
+  const [startDateTo, setStartDateTo] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
-  const fetchCourses = async (query = "") => {
+  const fetchCourses = async () => {
     try {
-      const authToken = getAuthToken();
-      if (!authToken) {
-        console.error("No authentication token found");
-        return;
-      }
-
-      const response = await axios.get(
-        `http://localhost:8055/operations/courses?asPage=false&page=0&size=20&title=${query}`,
-        {
-          headers: {
-            accept: "*/*",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-      setCourses(response.data);
+      const data = await courseService.getCourses({
+        title: searchQuery,
+        asPage: false,
+        page: 0,
+        size: 20,
+        startDateFrom,
+        startDateTo,
+      });
+      setCourses(data);
     } catch (error) {
       console.error("Error fetching courses:", error);
     }
   };
 
+  const fetchTeachers = async () => {
+    try {
+      const data = await userService.getUsers({ role: 'TEACHER' });
+      setTeachers(data);
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+    }
+  };
+
   useEffect(() => {
-    fetchCourses(searchQuery);
-  }, [searchQuery]);
+    fetchCourses();
+    fetchTeachers();
+  }, [searchQuery, startDateFrom, startDateTo]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -65,17 +62,7 @@ const CourseManagement = () => {
 
   const handleAddCourse = async () => {
     try {
-      const authToken = getAuthToken();
-      await axios.post(
-        "http://localhost:8055/operations/courses",
-        newCourse,
-        {
-          headers: {
-            accept: "*/*",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await courseService.addCourse(newCourse);
       fetchCourses();
       document.getElementById('add_course_modal').checked = false;
       setNewCourse({
@@ -93,18 +80,11 @@ const CourseManagement = () => {
 
   const handleAssignTeacher = async () => {
     try {
-      const authToken = getAuthToken();
-      await axios.post(
-        `http://localhost:8055/operations/courses/${selectedCourseId}/assign-teacher`,
-        { teacherId: teachers.indexOf(selectedTeacher) + 1 },
-        {
-          headers: {
-            accept: "*/*",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await courseService.assignTeacher(selectedCourseId, { teacherId: selectedTeacher });
       fetchCourses();
+      if (selectedCourse && selectedCourse.id === selectedCourseId) {
+        await handleViewDetails(selectedCourseId);
+      }
       document.getElementById('assign_teacher_modal').checked = false;
       setSelectedTeacher("");
       setSelectedCourseId(null);
@@ -115,63 +95,50 @@ const CourseManagement = () => {
 
   const handleScheduleCourse = async () => {
     try {
-      const authToken = getAuthToken();
-      await axios.post(
-        `http://localhost:8055/operations/courses/${selectedCourseId}/schedule`,
-        { 
-          courseId: selectedCourseId, 
-          schedules: [{ days: [selectedDay], timeSlot: selectedTime }] 
-        },
-        {
-          headers: {
-            accept: "*/*",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      const scheduleRequest = {
+        courseId: selectedCourseId,
+        schedules: [
+          {
+            id: 0,
+            days: selectedDay,
+            timeSlot: selectedTime
+          }
+        ]
+      };
+      await courseService.scheduleCourse(selectedCourseId, scheduleRequest);
       fetchCourses();
+      if (selectedCourse && selectedCourse.id === selectedCourseId) {
+        await handleViewDetails(selectedCourseId);
+      }
       document.getElementById('schedule_course_modal').checked = false;
       setSelectedDay("");
       setSelectedTime("");
       setSelectedCourseId(null);
     } catch (error) {
-      console.error("Error scheduling course:", error);
+      console.error("Error scheduling course:", error.response?.data || error.message);
+      alert(`Failed to schedule course: ${error.response?.data?.message || error.message}`);
     }
   };
 
   const handleDeleteModule = async (courseId, moduleId) => {
     try {
-      const authToken = getAuthToken();
-      await axios.delete(
-        `http://localhost:8055/operations/courses/${courseId}/modules/${moduleId}`,
-        {
-          headers: {
-            accept: "*/*",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await courseService.deleteModule(courseId, moduleId);
       fetchCourses();
+      if (selectedCourse && selectedCourse.id === courseId) {
+        await handleViewDetails(courseId);
+      }
     } catch (error) {
       console.error("Error deleting module:", error);
     }
   };
 
-  const handleDeleteCourse = async (courseId) => {
+  const handleViewDetails = async (courseId) => {
     try {
-      const authToken = getAuthToken();
-      await axios.delete(
-        `http://localhost:8055/operations/courses/${courseId}`,
-        {
-          headers: {
-            accept: "*/*",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-      fetchCourses();
+      const courseDetails = await courseService.getCourseById(courseId);
+      setSelectedCourse(courseDetails);
+      document.getElementById('view_details_modal').checked = true;
     } catch (error) {
-      console.error("Error deleting course:", error);
+      console.error("Error fetching course details:", error);
     }
   };
 
@@ -189,6 +156,20 @@ const CourseManagement = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value.trim())}
             />
+            <input
+              type="date"
+              placeholder="Start Date From"
+              className="input input-bordered max-w-xs bg-slate-300 ml-2"
+              value={startDateFrom}
+              onChange={(e) => setStartDateFrom(e.target.value)}
+            />
+            <input
+              type="date"
+              placeholder="Start Date To"
+              className="input input-bordered max-w-xs bg-slate-300 ml-2"
+              value={startDateTo}
+              onChange={(e) => setStartDateTo(e.target.value)}
+            />
             <button type="submit" className="btn btn-success ml-4">
               Search
             </button>
@@ -200,18 +181,24 @@ const CourseManagement = () => {
             <thead className="text-zinc-950">
               <tr>
                 <th>Title</th>
-                <th>Faculty</th>
                 <th>Start Date</th>
+                <th>End Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {courses.map((course, index) => (
+              {courses.map((course) => (
                 <tr key={course.id}>
                   <td>{course.title}</td>
-                  <td>{teachers[index % teachers.length]}</td>
                   <td>{course.startDate}</td>
+                  <td>{course.endDate}</td>
                   <td>
+                    <button 
+                      onClick={() => handleViewDetails(course.id)} 
+                      className="btn btn-outline btn-info btn-xs mr-2"
+                    >
+                      View Details
+                    </button>
                     <label 
                       htmlFor="assign_teacher_modal" 
                       className="btn btn-outline btn-warning btn-xs mr-2"
@@ -226,8 +213,12 @@ const CourseManagement = () => {
                     >
                       Schedule
                     </label>
-                    <button onClick={() => handleDeleteModule(course.id, course.modules[0]?.id)} className="btn btn-outline btn-error btn-xs mr-2">Delete Module</button>
-                    <button onClick={() => handleDeleteCourse(course.id)} className="btn btn-outline btn-error btn-xs">Delete Course</button>
+                    <button 
+                      onClick={() => handleDeleteModule(course.id, course.modules[0]?.id)} 
+                      className="btn btn-outline btn-error btn-xs mr-2"
+                    >
+                      Delete Module
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -291,8 +282,8 @@ const CourseManagement = () => {
             onChange={(e) => setSelectedTeacher(e.target.value)}
           >
             <option disabled value="">Select a teacher</option>
-            {teachers.map((teacher, index) => (
-              <option key={index} value={teacher}>{teacher}</option>
+            {teachers.map((teacher) => (
+              <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
             ))}
           </select>
           <div className="modal-action">
@@ -330,6 +321,46 @@ const CourseManagement = () => {
           <div className="modal-action">
             <button onClick={handleScheduleCourse} className="btn btn-primary">Schedule</button>
             <label htmlFor="schedule_course_modal" className="btn btn-ghost">Close</label>
+          </div>
+        </div>
+      </div>
+
+      {/* View Details Modal */}
+      <input type="checkbox" id="view_details_modal" className="modal-toggle" />
+      <div className="modal">
+        <div className="modal-box bg-white text-gray-800">
+          <h3 className="font-bold text-lg text-gray-900">Course Details</h3>
+          {selectedCourse && (
+            <div>
+              <p><strong>Title:</strong> {selectedCourse.title}</p>
+              <p><strong>Description:</strong> {selectedCourse.description}</p>
+              <p><strong>Start Date:</strong> {selectedCourse.startDate}</p>
+              <p><strong>End Date:</strong> {selectedCourse.endDate}</p>
+              <p><strong>Class Meeting Link:</strong> {selectedCourse.classMeetingLink}</p>
+              <h4 className="font-bold mt-4">Assigned Teacher</h4>
+              <p>{selectedCourse.assignedTeacher ? selectedCourse.assignedTeacher.name : 'No teacher assigned'}</p>
+              <h4 className="font-bold mt-4">Schedule</h4>
+              {selectedCourse.schedules && selectedCourse.schedules.length > 0 ? (
+                selectedCourse.schedules.map((schedule, index) => (
+                  <p key={index}>{schedule.days} at {schedule.timeSlot}</p>
+                ))
+              ) : (
+                <p>No schedule set</p>
+              )}
+              <h4 className="font-bold mt-4">Modules</h4>
+              {selectedCourse.modules && selectedCourse.modules.length > 0 ? (
+                <ul>
+                  {selectedCourse.modules.map((module, index) => (
+                    <li key={index}>{module.title}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No modules added</p>
+              )}
+            </div>
+          )}
+          <div className="modal-action">
+            <label htmlFor="view_details_modal" className="btn btn-ghost">Close</label>
           </div>
         </div>
       </div>
