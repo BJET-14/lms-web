@@ -89,9 +89,9 @@ const StudentCourseView = () => {
             return (
               <div
                 key={course.id}
-                className="card border-stone-950 bg-slate-100  shadow-xl flex flex-col p-4 transition-all duration-300 ease-in-out"
+                className="card border-stone-950 bg-slate-100  shadow-xl flex flex-col p-4 transition-all duration-300 ease-in-out border-solid border-2 border-sky-500"
               >
-                <div className="card-body flex flex-col justify-between h-full">
+                <div className="card-body flex flex-col justify-between h-full ">
                   <h3 className="card-title text-lg font-semibold">{course.title}</h3>
                   <p>Description: {truncatedDescription}</p>
                   <p>Faculty: {teachers[index % teachers.length]}</p>
