@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from 'react'
-import { authService } from '../utils/api'  // Adjust the import path as needed
+import { authService, userService } from '../utils/api'  // Adjust the import path as needed
 import Cookies from 'js-cookie'
 
 const Authorization = () => {
@@ -49,6 +49,13 @@ const Authorization = () => {
 
     try {
       const result = await authService.login(formData)
+      
+      // Fetch user details to get the user ID
+      const userDetails = await userService.getUserByEmail(formData.email)
+      
+      // Store user ID in localStorage
+      localStorage.setItem('userId', userDetails.id)
+      
       // Redirect to dashboard with a full page reload
       window.location.href = '/dashboard'
     } catch (error) {

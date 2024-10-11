@@ -13,13 +13,16 @@ const CourseDetails = () => {
   const [course, setCourse] = useState(null);
   const [teachers, setTeachers] = useState([]);
   const [selectedTeacher, setSelectedTeacher] = useState("");
-  const [selectedDay, setSelectedDay] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
+  const [newSchedule, setNewSchedule] = useState({ days: "", timeSlot: "" });
+  const [newModule, setNewModule] = useState({ title: "", description: "" });
+  const [courseSchedules, setCourseSchedules] = useState({});
+  const [assignedTeacher, setAssignedTeacher] = useState(null);
 
   useEffect(() => {
     if (id) {
       fetchCourseDetails();
       fetchTeachers();
+      fetchCourseSchedule();
     }
   }, [id]);
 
@@ -27,8 +30,23 @@ const CourseDetails = () => {
     try {
       const data = await courseService.getCourseById(id);
       setCourse(data);
+      if (data.teacherId) {
+        fetchAssignedTeacherDetails(data.teacherId);
+      } else {
+        setAssignedTeacher(null);
+      }
     } catch (error) {
       console.error("Error fetching course details:", error);
+      alert("Failed to fetch course details. Please try again.");
+    }
+  };
+
+  const fetchAssignedTeacherDetails = async (teacherId) => {
+    try {
+      const teacherData = await userService.getUserById(teacherId);
+      setAssignedTeacher(teacherData);
+    } catch (error) {
+      console.error("Error fetching assigned teacher details:", error);
     }
   };
 
@@ -38,38 +56,70 @@ const CourseDetails = () => {
       setTeachers(data);
     } catch (error) {
       console.error("Error fetching teachers:", error);
+      alert("Failed to fetch teachers. Please try again.");
+    }
+  };
+
+  const fetchCourseSchedule = async () => {
+    try {
+      const scheduleData = await courseService.getCourseSchedule(id);
+      setCourseSchedules({ [id]: scheduleData });
+    } catch (error) {
+      console.error("Error fetching course schedule:", error);
+      alert("Failed to fetch course schedule. Please try again.");
     }
   };
 
   const handleAssignTeacher = async () => {
     try {
+      if (!selectedTeacher) {
+        alert("Please select a teacher to assign.");
+        return;
+      }
       await courseService.assignTeacher(id, { teacherId: selectedTeacher });
       fetchCourseDetails();
       setSelectedTeacher("");
     } catch (error) {
       console.error("Error assigning teacher:", error);
+      alert(`Failed to assign teacher: ${error.response?.data?.message || error.message}`);
     }
   };
 
   const handleScheduleCourse = async () => {
     try {
+      if (!newSchedule.days || !newSchedule.timeSlot) {
+        alert("Please select both day and time slot for scheduling.");
+        return;
+      }
       const scheduleRequest = {
-        courseId: id,
-        schedules: [
-          {
-            id: 0,
-            days: selectedDay,
-            timeSlot: selectedTime
-          }
-        ]
+        schedules: [newSchedule]
       };
       await courseService.scheduleCourse(id, scheduleRequest);
-      fetchCourseDetails();
-      setSelectedDay("");
-      setSelectedTime("");
+      fetchCourseSchedule();
+      setNewSchedule({ days: "", timeSlot: "" });
     } catch (error) {
-      console.error("Error scheduling course:", error.response?.data || error.message);
+      console.error("Error scheduling course:", error);
       alert(`Failed to schedule course: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const handleAddModule = async () => {
+    try {
+      if (!newModule.title || !newModule.description) {
+        alert("Please provide both title and description for the new module.");
+        return;
+      }
+      const updatedModules = [...(course.modules || []), newModule];
+      const updatedCourse = {
+        ...course,
+        modules: updatedModules
+      };
+      await courseService.updateCourse(id, updatedCourse);
+      fetchCourseDetails();
+      setNewModule({ title: "", description: "" });
+    } catch (error) {
+      console.error("Error adding module:", error);
+      alert(`Failed to add module: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -79,7 +129,20 @@ const CourseDetails = () => {
       fetchCourseDetails();
     } catch (error) {
       console.error("Error deleting module:", error);
+      alert(`Failed to delete module: ${error.response?.data?.message || error.message}`);
     }
+  };
+
+  const renderSchedules = (courseId) => {
+    const schedules = courseSchedules[courseId];
+    if (!schedules || schedules.length === 0) return 'Not scheduled';
+    return (
+      <ul className="list-disc list-inside">
+        {schedules.map((schedule, index) => (
+          <li key={index}>{schedule.days} at {schedule.timeSlot}</li>
+        ))}
+      </ul>
+    );
   };
 
   if (!course) {
@@ -98,18 +161,18 @@ const CourseDetails = () => {
 
         <div className="mt-6">
           <h4 className="font-bold text-gray-800">Assigned Teacher</h4>
-          <p className="text-gray-700">{course.assignedTeacher ? course.assignedTeacher.name : 'No teacher assigned'}</p>
+          {assignedTeacher ? (
+            <p className="text-gray-700">
+              {assignedTeacher.firstName} {assignedTeacher.lastName} (ID: {assignedTeacher.id})
+            </p>
+          ) : (
+            <p className="text-gray-700">No teacher assigned</p>
+          )}
         </div>
 
         <div className="mt-6">
           <h4 className="font-bold text-gray-800">Schedule</h4>
-          {course.schedules && course.schedules.length > 0 ? (
-            course.schedules.map((schedule, index) => (
-              <p key={index} className="text-gray-700">{schedule.days} at {schedule.timeSlot}</p>
-            ))
-          ) : (
-            <p className="text-gray-700">No schedule set</p>
-          )}
+          {renderSchedules(id)}
         </div>
 
         <div className="mt-6">
@@ -118,7 +181,7 @@ const CourseDetails = () => {
             <ul>
               {course.modules.map((module) => (
                 <li key={module.id} className="flex justify-between items-center mb-2">
-                  <span className="text-gray-700">{module.title}</span>
+                  <span className="text-gray-700">{module.title} - {module.description}</span>
                   <button 
                     onClick={() => handleDeleteModule(module.id)} 
                     className="btn btn-outline btn-error btn-xs text-red-500"
@@ -134,26 +197,30 @@ const CourseDetails = () => {
         </div>
 
         <div className="mt-6">
-          <h4 className="font-bold mb-2 text-gray-800">Assign Teacher</h4>
-          <select 
-            className="select select-bordered w-full max-w-xs bg-gray-100 text-gray-800"
-            value={selectedTeacher}
-            onChange={(e) => setSelectedTeacher(e.target.value)}
-          >
-            <option disabled value="">Select a teacher</option>
-            {teachers.map((teacher) => (
-              <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
-            ))}
-          </select>
-          <button onClick={handleAssignTeacher} className="btn btn-primary mt-2 text-white">Assign Teacher</button>
+          <h4 className="font-bold mb-2 text-gray-800">Add Module</h4>
+          <input
+            type="text"
+            placeholder="Module Title"
+            className="input input-bordered w-full max-w-xs bg-gray-100 text-gray-800 mb-2"
+            value={newModule.title}
+            onChange={(e) => setNewModule({...newModule, title: e.target.value})}
+          />
+          <input
+            type="text"
+            placeholder="Module Description"
+            className="input input-bordered w-full max-w-xs bg-gray-100 text-gray-800 mb-2"
+            value={newModule.description}
+            onChange={(e) => setNewModule({...newModule, description: e.target.value})}
+          />
+          <button onClick={handleAddModule} className="btn btn-primary text-white">Add Module</button>
         </div>
 
         <div className="mt-6">
           <h4 className="font-bold mb-2 text-gray-800">Schedule Course</h4>
           <select 
             className="select select-bordered w-full max-w-xs bg-gray-100 text-gray-800 mb-2"
-            value={selectedDay}
-            onChange={(e) => setSelectedDay(e.target.value)}
+            value={newSchedule.days}
+            onChange={(e) => setNewSchedule({...newSchedule, days: e.target.value})}
           >
             <option disabled value="">Select a day</option>
             {days.map((day, index) => (
@@ -162,15 +229,32 @@ const CourseDetails = () => {
           </select>
           <select 
             className="select select-bordered w-full max-w-xs bg-gray-100 text-gray-800 mb-2"
-            value={selectedTime}
-            onChange={(e) => setSelectedTime(e.target.value)}
+            value={newSchedule.timeSlot}
+            onChange={(e) => setNewSchedule({...newSchedule, timeSlot: e.target.value})}
           >
             <option disabled value="">Select a time slot</option>
             {timeSlots.map((slot, index) => (
               <option key={index} value={slot}>{slot}</option>
             ))}
           </select>
-          <button onClick={handleScheduleCourse} className="btn btn-primary text-white">Schedule Course</button>
+          <button onClick={handleScheduleCourse} className="btn btn-primary text-white">Add Schedule</button>
+        </div>
+
+        <div className="mt-6">
+          <h4 className="font-bold mb-2 text-gray-800">Assign Teacher</h4>
+          <select 
+            className="select select-bordered w-full max-w-xs bg-gray-100 text-gray-800 mb-2"
+            value={selectedTeacher}
+            onChange={(e) => setSelectedTeacher(e.target.value)}
+          >
+            <option disabled value="">Select a teacher</option>
+            {teachers.map((teacher) => (
+              <option key={teacher.id} value={teacher.id}>
+                {teacher.firstName} {teacher.lastName} (ID: {teacher.id})
+              </option>
+            ))}
+          </select>
+          <button onClick={handleAssignTeacher} className="btn btn-primary text-white">Assign Teacher</button>
         </div>
       </div>
     </div>

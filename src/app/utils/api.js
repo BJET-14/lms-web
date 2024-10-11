@@ -1,4 +1,3 @@
-// api.js
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
@@ -89,6 +88,14 @@ export const api = {
     getUserByEmail: (email) => apiCall('get', '/commons/users/email', { params: { email } }),
     checkUserExist: (email) => apiCall('get', '/commons/users/exist', { params: { email } }),
   },
+  teachers: {
+    updateTeacher: (teacherId, teacherData) => apiCall('put', `/commons/teachers/${teacherId}/update`, teacherData),
+    getTeachers: (params) => apiCall('get', '/commons/teachers', { params }),
+    getTeacherById: (teacherId) => apiCall('get', `/commons/teachers/${teacherId}`),
+  },
+  students: {
+    getStudentById: (studentId) => apiCall('get', `/commons/students/${studentId}`),
+  },
   courses: {
     getCourses: (params) => apiCall('get', '/operations/courses', { params }),
     addCourse: (courseData) => apiCall('post', '/operations/courses', courseData),
@@ -98,8 +105,15 @@ export const api = {
     assignTeacher: (courseId, teacherData) => apiCall('post', `/operations/courses/${courseId}/assign`, teacherData),
     scheduleCourse: (courseId, scheduleData) => apiCall('post', `/operations/courses/${courseId}/schedule`, scheduleData),
     getCourseSchedule: (courseId) => apiCall('get', `/operations/courses/${courseId}/class-schedule`),
-    getCourseById: (id) => apiCall('get', `/operations/courses/${id}`),
-
+    enrollStudent: (courseId, studentData) => apiCall('post', `/operations/courses/${courseId}/enrollement`, studentData),
+    getEnrollments: (courseId) => apiCall('get', `/operations/courses/${courseId}/enrollment`),
+  },
+  exams: {
+    getCourseExams: (courseId) => apiCall('get', `/operations/courses/${courseId}/exams`),
+    addCourseExam: (courseId, examData) => apiCall('post', `/operations/courses/${courseId}/exams`, examData),
+    uploadExamResults: (courseId, examId, fileData) => apiCall('post', `/operations/courses/${courseId}/exams/${examId}/upload-results`, fileData),
+    getExamTemplate: (courseId, examId) => apiCall('get', `/operations/courses/${courseId}/exams/${examId}/template`),
+    getExamResult: (courseId, examId) => apiCall('get', `/operations/courses/${courseId}/exams/${examId}/result`),
   },
 };
 
@@ -163,18 +177,35 @@ export const userService = {
   },
 };
 
-export const courseService = {
+export const teacherService = {
+  updateTeacher: async (teacherId, teacherData) => {
+    const response = await api.teachers.updateTeacher(teacherId, teacherData);
+    return response.data;
+  },
+  getTeachers: async (params = {}) => {
+    const response = await api.teachers.getTeachers(params);
+    return response.data;
+  },
+  getTeacherById: async (teacherId) => {
+    const response = await api.teachers.getTeacherById(teacherId);
+    return response.data;
+  },
+};
 
+export const studentService = {
+  getStudentById: async (studentId) => {
+    const response = await api.students.getStudentById(studentId);
+    return response.data;
+  },
+};
+
+export const courseService = {
   getCourses: async (params = {}) => {
     const response = await api.courses.getCourses(params);
     return response.data;
   },
   addCourse: async (courseData) => {
     const response = await api.courses.addCourse(courseData);
-    return response.data;
-  },
-  updateCourse: async (id, courseData) => {
-    const response = await api.courses.updateCourse(id, courseData);
     return response.data;
   },
   getCourseById: async (id) => {
@@ -185,10 +216,6 @@ export const courseService = {
     const response = await api.courses.deleteModule(courseId, moduleId);
     return response.data;
   },
-  assignTeacher: async (courseId, teacherData) => {
-    const response = await api.courses.assignTeacher(courseId, teacherData);
-    return response.data;
-  },
   scheduleCourse: async (courseId, scheduleData) => {
     const response = await api.courses.scheduleCourse(courseId, scheduleData);
     return response.data;
@@ -197,8 +224,44 @@ export const courseService = {
     const response = await api.courses.getCourseSchedule(courseId);
     return response.data;
   },
-  getCourseById: async (id) => {
-    const response = await api.courses.getCourseById(id);
+  enrollStudent: async (courseId, studentData) => {
+    const response = await api.courses.enrollStudent(courseId, studentData);
+    return response.data;
+  },
+  getEnrollments: async (courseId) => {
+    const response = await api.courses.getEnrollments(courseId);
+    return response.data;
+  },
+  assignTeacher: async (courseId, teacherData) => {
+    const response = await api.courses.assignTeacher(courseId, teacherData);
+    return response.data;
+  },
+
+  updateCourse: async (id, courseData) => {
+    const response = await api.courses.updateCourse(id, courseData);
+    return response.data;
+  },
+};
+
+export const examService = {
+  getCourseExams: async (courseId) => {
+    const response = await api.exams.getCourseExams(courseId);
+    return response.data;
+  },
+  addCourseExam: async (courseId, examData) => {
+    const response = await api.exams.addCourseExam(courseId, examData);
+    return response.data;
+  },
+  uploadExamResults: async (courseId, examId, fileData) => {
+    const response = await api.exams.uploadExamResults(courseId, examId, fileData);
+    return response.data;
+  },
+  getExamTemplate: async (courseId, examId) => {
+    const response = await api.exams.getExamTemplate(courseId, examId);
+    return response.data;
+  },
+  getExamResult: async (courseId, examId) => {
+    const response = await api.exams.getExamResult(courseId, examId);
     return response.data;
   },
 };
