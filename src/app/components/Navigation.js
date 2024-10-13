@@ -24,24 +24,27 @@ const Navigation = () => {
 
   const getNavigationByRole = (role) => {
     switch (role) {
-      case 'STUDENT':
+      case 'TEACHER':
         return [
           { name: 'Dashboard', path: '/dashboard' },
           { name: 'Profile', path: '/profile' },
-          { name: 'Courses', path: '/student_courseview' }
+          { name: 'Assigned Courses', path: '/teachercourseview' },
+          { name: 'Exam', path: '/exam' }
         ];
       case 'ADMIN':
         return [
           { name: 'Dashboard', path: '/dashboard' },
           { name: 'Profile', path: '/profile' },
           { name: 'Users', path: '/users' },
-          { name: 'Course Management', path: '/coursemanagement' }
+          { name: 'Course Management', path: '/coursemanagement' },
+          { name: 'Exam', path: '/exam' }
         ];
-      case 'TEACHER':
+      case 'STUDENT':
         return [
           { name: 'Dashboard', path: '/dashboard' },
           { name: 'Profile', path: '/profile' },
-          { name: 'Course Management', path: '/coursemanagement' }
+          { name: 'Course Enrollment', path: '/student_courseview' },
+          { name: 'Exam', path: '/exam' }
         ];
       default:
         return [];
