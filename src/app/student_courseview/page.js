@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getAuthToken } from "../utils/api";
+import { useDropzone } from "react-dropzone"; // For drag-and-drop functionality
 
 const teachers = [
   "Ms. Johnson",
@@ -21,11 +22,53 @@ const ratings = [
   { id: 6, rating: 4.7, reviews: 28 },
 ];
 
+// Text Posting Component
+const TextPosting = ({ onTextPost }) => {
+  const [text, setText] = useState("");
+
+  const handlePost = () => {
+    if (text.trim()) {
+      onTextPost(text); // Call the onTextPost handler with the text
+      setText(""); // Clear the text after posting
+    }
+  };
+
+  return (
+    <div className="mt-4">
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Announce something to your class"
+        className="border p-2 w-full rounded-md bg-slate-300"
+      />
+      <button
+        onClick={handlePost}
+        className="mt-2 bg-blue-500 text-white p-2 rounded-md"
+      >
+        Post
+      </button>
+    </div>
+  );
+};
+
+// Main StudentCourseView Component
 const StudentCourseView = () => {
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null); // State to track selected course
+  const [posts, setPosts] = useState([]); // State to track all posts
+
+  const handleTextPost = (text) => {
+    const newPost = {
+      id: posts.length + 1,
+      text,
+      files: currentFiles,
+      timestamp: new Date().toLocaleString(),
+    };
+
+    setPosts([newPost, ...posts]); // Add new post to the posts list
+  };
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -61,7 +104,10 @@ const StudentCourseView = () => {
   };
 
   const handleEnroll = (courseId) => {
-    setEnrolledCourses((prevEnrolledCourses) => [...prevEnrolledCourses, courseId]);
+    setEnrolledCourses((prevEnrolledCourses) => [
+      ...prevEnrolledCourses,
+      courseId,
+    ]);
     alert("Course Enrollment Successful!");
   };
 
@@ -75,8 +121,13 @@ const StudentCourseView = () => {
         {!selectedCourse ? (
           <>
             <div className="flex flex-wrap items-center justify-between">
-              <h2 className="text-2xl ml-16 font-bold mb-4">Courses Available</h2>
-              <form onSubmit={handleSearch} className="mb-4 mr-16 flex flex-wrap items-center">
+              <h2 className="text-2xl ml-16 font-bold mb-4">
+                Courses Available
+              </h2>
+              <form
+                onSubmit={handleSearch}
+                className="mb-4 mr-16 flex flex-wrap items-center"
+              >
                 <input
                   type="search"
                   name="search"
@@ -106,7 +157,9 @@ const StudentCourseView = () => {
                     className="card border-stone-950 bg-slate-100 shadow-xl flex flex-col p-4 transition-all duration-300 ease-in-out border-solid border-2 border-sky-500"
                   >
                     <div className="card-body flex flex-col justify-between h-full">
-                      <h3 className="card-title text-lg font-semibold">{course.title}</h3>
+                      <h3 className="card-title text-lg font-semibold">
+                        {course.title}
+                      </h3>
                       <p>Description: {truncatedDescription}</p>
                       <p>Faculty: {teachers[index % teachers.length]}</p>
                       <p>Start Date: {course.startDate}</p>
@@ -145,7 +198,7 @@ const StudentCourseView = () => {
                             onClick={() => handleEnroll(course.id)}
                             className={`text-white ${
                               isEnrolled
-                                ? "bg-green-500"
+                                ? "bg-slate-300"
                                 : "bg-gradient-to-r from-cyan-500 to-blue-500"
                             } hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:focus:ring-cyan-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2`}
                             disabled={isEnrolled}
@@ -164,7 +217,10 @@ const StudentCourseView = () => {
           <div className="details-view bg-white p-6 rounded-md shadow-md">
             <h1 className="text-3xl font-bold mb-4">{selectedCourse.title}</h1>
             <p className="text-lg mb-4">{selectedCourse.description}</p>
-            <p className="text-sm">Faculty: {teachers[courses.indexOf(selectedCourse) % teachers.length]}</p>
+            <p className="text-sm">
+              Faculty:{" "}
+              {teachers[courses.indexOf(selectedCourse) % teachers.length]}
+            </p>
             <p className="text-sm">Start Date: {selectedCourse.startDate}</p>
 
             {/* Display Modules in Table Format */}
@@ -172,25 +228,79 @@ const StudentCourseView = () => {
             <table className="min-w-full border-collapse border border-gray-300 mt-2">
               <thead>
                 <tr className="bg-gray-200">
-                  <th className="border border-gray-300 px-4 py-2 text-left">Title</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Description</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Title
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Description
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {selectedCourse.modules && selectedCourse.modules.length > 0 ? (
                   selectedCourse.modules.map((module, index) => (
                     <tr key={index}>
-                      <td className="border border-gray-300 px-4 py-2">{module.title}</td>
-                      <td className="border border-gray-300 px-4 py-2">{module.description}</td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {module.title}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {module.description}
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td className="border border-gray-300 px-4 py-2" colSpan="2">No modules available for this course.</td>
+                    <td
+                      className="border border-gray-300 px-4 py-2"
+                      colSpan="2"
+                    >
+                      No modules available for this course.
+                    </td>
                   </tr>
                 )}
               </tbody>
             </table>
+
+            {/* Check if student is enrolled in the course */}
+            {enrolledCourses.includes(selectedCourse.id) && (
+              <div className="flex h-fit py-6 text-zinc-950 bg-slate-200">
+              <div className="flex flex-col w-full p-6 rounded-md shadow-md">
+    
+        
+                {/* Text Posting Section */}
+                <h2 className="text-xl font-bold mt-4">Post an Announcement</h2>
+                <TextPosting onTextPost={handleTextPost} />
+        
+                {/* Displaying the Posts Below */}
+                <div className="mt-6">
+                  <h2 className="text-xl font-bold">Class Posts</h2>
+                  {posts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="border p-4 rounded-md bg-white shadow-md mt-4"
+                    >
+                      <p>
+                        <strong>Posted on:</strong> {post.timestamp}
+                      </p>
+                      <p>{post.text}</p>
+        
+                      {/* If there are files, display them */}
+                      {post.files.length > 0 && (
+                        <div className="mt-2">
+                          <h4 className="font-bold">Uploaded Files:</h4>
+                          <ul className="list-disc list-inside">
+                            {post.files.map((file, index) => (
+                              <li key={index}>{file}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            )}
 
             <button
               onClick={() => setSelectedCourse(null)} // Back to course list
