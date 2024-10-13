@@ -1,39 +1,81 @@
-"use client"
+'use client';
 import React, { useState, useEffect } from "react";
-import { courseService, userService } from "../utils/api";
-import Link from 'next/link';
+import axios from "axios";
+import { getAuthToken, userService } from "../utils/api";
 
-const CourseManagement = () => {
+// Text Posting Component
+const TextPosting = ({ onTextPost }) => {
+  const [text, setText] = useState("");
+
+  const handlePost = () => {
+    if (text.trim()) {
+      onTextPost(text); // Call the onTextPost handler with the text
+      setText(""); // Clear the text after posting
+    }
+  };
+
+  return (
+    <div className="mt-4">
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Announce something to your class"
+        className="border p-2 w-full rounded-md bg-slate-300"
+      />
+      <button
+        onClick={handlePost}
+        className="mt-2 bg-blue-500 text-white p-2 rounded-md"
+      >
+        Post
+      </button>
+    </div>
+  );
+};
+
+// Main teachercourseview Component
+const teachercourseview = () => {
   const [courses, setCourses] = useState([]);
-  const [courseSchedules, setCourseSchedules] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [newCourse, setNewCourse] = useState({
-    title: "",
-    description: "",
-    startDate: "",
-    endDate: "",
-    modules: [],
-    classMeetingLink: "",
-  });
-  const [newModule, setNewModule] = useState({ title: "", description: "" });
   const [startDateFrom, setStartDateFrom] = useState("");
   const [startDateTo, setStartDateTo] = useState("");
-  const [assignedTeachers, setAssignedTeachers] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null); // State to track selected course
+  const [userId, setUserId] = useState(null);
+  const [postsByCourse, setPostsByCourse] = useState({}); // State to hold posts for each course
+  const [assignedTeachers, setAssignedTeachers] = useState({}); // State to store teacher info by course
 
-  const fetchCourses = async () => {
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      setUserId(storedUserId);
+      fetchCourses(storedUserId);
+    } else {
+      console.error("User ID not found, redirecting...");
+      window.location.href = '/authorization'; // Redirect to authorization if no user ID
+    }
+  }, []);
+
+  const fetchCourses = async (userId) => {
     try {
-      const data = await courseService.getCourses({
-        title: searchQuery,
-        asPage: false,
-        page: 0,
-        size: 20,
-        startDateFrom,
-        startDateTo,
-      });
-      setCourses(data);
-      data.forEach(course => {
-        fetchCourseSchedule(course.id);
+      const authToken = getAuthToken(); // Fetch the auth token
+
+      const response = await axios.get(
+        `http://localhost:8055/operations/courses?asPage=false&page=0&size=20&title=${searchQuery}&startDateFrom=${startDateFrom}&startDateTo=${startDateTo}`,
+        {
+          headers: {
+            accept: "*/*",
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      // Set courses and fetch the assigned teacher for each course
+      const filteredCourses = response.data.filter(
+        (course) => String(course.teacherId) === String(userId)
+      );
+
+      setCourses(filteredCourses);
+
+      filteredCourses.forEach(course => {
         if (course.teacherId) {
           fetchAssignedTeacherDetails(course.id, course.teacherId);
         }
@@ -43,232 +85,191 @@ const CourseManagement = () => {
     }
   };
 
-  const fetchCourseSchedule = async (courseId) => {
-    try {
-      const scheduleData = await courseService.getCourseSchedule(courseId);
-      setCourseSchedules(prev => ({...prev, [courseId]: scheduleData}));
-    } catch (error) {
-      console.error(`Error fetching schedule for course ${courseId}:`, error);
-    }
-  };
-
   const fetchAssignedTeacherDetails = async (courseId, teacherId) => {
     try {
       const teacherData = await userService.getUserById(teacherId);
-      setAssignedTeachers(prev => ({...prev, [courseId]: teacherData}));
+      setAssignedTeachers((prev) => ({
+        ...prev,
+        [courseId]: teacherData,
+      }));
     } catch (error) {
       console.error(`Error fetching assigned teacher details for course ${courseId}:`, error);
     }
   };
 
-  useEffect(() => {
-    fetchCourses();
-  }, [searchQuery, startDateFrom, startDateTo]);
-
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchCourses();
+    fetchCourses(userId); // Re-fetch the courses based on the search filters
   };
 
-  const handleAddCourse = async () => {
-    try {
-      await courseService.addCourse(newCourse);
-      fetchCourses();
-      setNewCourse({
-        title: "",
-        description: "",
-        startDate: "",
-        endDate: "",
-        modules: [],
-        classMeetingLink: "",
-      });
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error("Error adding course:", error);
-    }
+  const handleViewDetails = (course) => {
+    setSelectedCourse(course); // Show details of the selected course
   };
 
-  const handleAddModule = () => {
-    if (newModule.title && newModule.description) {
-      setNewCourse({
-        ...newCourse,
-        modules: [...newCourse.modules, newModule]
-      });
-      setNewModule({ title: "", description: "" });
-    } else {
-      alert("Please provide both title and description for the module.");
-    }
-  };
+  const handleTextPost = (courseId, text) => {
+    const newPost = {
+      id: (postsByCourse[courseId]?.length || 0) + 1, // Generate a new id for each post in the course
+      text,
+      timestamp: new Date().toLocaleString(),
+    };
 
-  const handleRemoveModule = (index) => {
-    const updatedModules = newCourse.modules.filter((_, i) => i !== index);
-    setNewCourse({ ...newCourse, modules: updatedModules });
+    // Update the posts for the specific course
+    setPostsByCourse((prevPosts) => ({
+      ...prevPosts,
+      [courseId]: [...(prevPosts[courseId] || []), newPost],
+    }));
   };
 
   const renderAssignedTeacher = (courseId) => {
     const teacher = assignedTeachers[courseId];
-    if (!teacher) return 'Not assigned';
-    return `${teacher.firstName} ${teacher.lastName} (ID: ${teacher.id})`;
+    return teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Not assigned';
   };
 
   return (
-    <div className="flex py-6 h-full w-full text-zinc-950 bg-slate-200">
-      <div className="w-full p-6 rounded-md shadow-md">
-        <h2 className="text-2xl font-bold mb-4">Course Management</h2>
-        <div className="flex justify-between mb-4">
-          <form onSubmit={handleSearch} className="flex">
-            <input
-              type="search"
-              name="search"
-              placeholder="Search courses"
-              className="input input-bordered max-w-xs bg-slate-300"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value.trim())}
-            />
-            <input
-              type="date"
-              placeholder="Start Date From"
-              className="input input-bordered max-w-xs bg-slate-300 ml-2"
-              value={startDateFrom}
-              onChange={(e) => setStartDateFrom(e.target.value)}
-            />
-            <input
-              type="date"
-              placeholder="Start Date To"
-              className="input input-bordered max-w-xs bg-slate-300 ml-2"
-              value={startDateTo}
-              onChange={(e) => setStartDateTo(e.target.value)}
-            />
-            <button type="submit" className="btn btn-success ml-4">
-              Search
-            </button>
-          </form>
-          <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">Add New Course</button>
-        </div>
-        
-        {/* Course Table */}
-        <div className="overflow-x-auto">
-          <table className="table w-full bg-slate-200">
-            <thead className="text-zinc-950">
-              <tr>
-                <th>Title</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Assigned Teacher</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {courses.map((course) => (
-                <tr key={course.id}>
-                  <td>{course.title}</td>
-                  <td>{course.startDate}</td>
-                  <td>{course.endDate}</td>
-                  <td>{renderAssignedTeacher(course.id)}</td>
-                  <td>
-                    <Link href={`/course/${course.id}`} className="btn btn-outline btn-info btn-xs mr-2">
-                      View Details
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="flex h-fit py-6 text-zinc-950 bg-slate-200">
+      <div className="flex flex-col w-full p-6 rounded-md shadow-md">
+        {!selectedCourse ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between">
+              <h2 className="text-2xl ml-16 font-bold mb-4">
+                Courses with Assigned Teachers
+              </h2>
+              <form
+                onSubmit={handleSearch}
+                className="mb-4 mr-16 flex flex-wrap items-center"
+              >
+                <input
+                  type="search"
+                  name="search"
+                  placeholder="Search courses"
+                  className="input input-bordered max-w-lg bg-slate-300"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value.trim())}
+                />
+                <input
+                  type="date"
+                  placeholder="Start Date From"
+                  className="input input-bordered max-w-xs bg-slate-300 ml-2"
+                  value={startDateFrom}
+                  onChange={(e) => setStartDateFrom(e.target.value)}
+                />
+                <input
+                  type="date"
+                  placeholder="Start Date To"
+                  className="input input-bordered max-w-xs bg-slate-300 ml-2"
+                  value={startDateTo}
+                  onChange={(e) => setStartDateTo(e.target.value)}
+                />
+                <button type="submit" className="btn btn-success ml-4">
+                  Search
+                </button>
+              </form>
+            </div>
 
-        {/* Modal for Adding New Course */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="my-modal">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-              <div className="mt-3 text-center">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">Add New Course</h3>
-                <div className="mt-2 px-7 py-3">
-                  <input
-                    type="text"
-                    placeholder="Title"
-                    className="input input-bordered w-full mt-2 bg-gray-100 text-gray-800"
-                    value={newCourse.title}
-                    onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
-                  />
-                  <textarea
-                    placeholder="Description"
-                    className="textarea textarea-bordered w-full mt-2 bg-gray-100 text-gray-800"
-                    value={newCourse.description}
-                    onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
-                  ></textarea>
-                  <input
-                    type="date"
-                    className="input input-bordered w-full mt-2 bg-gray-100 text-gray-800"
-                    value={newCourse.startDate}
-                    onChange={(e) => setNewCourse({ ...newCourse, startDate: e.target.value })}
-                  />
-                  <input
-                    type="date"
-                    className="input input-bordered w-full mt-2 bg-gray-100 text-gray-800"
-                    value={newCourse.endDate}
-                    onChange={(e) => setNewCourse({ ...newCourse, endDate: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Class Meeting Link"
-                    className="input input-bordered w-full mt-2 bg-gray-100 text-gray-800"
-                    value={newCourse.classMeetingLink}
-                    onChange={(e) => setNewCourse({ ...newCourse, classMeetingLink: e.target.value })}
-                  />
-                  
-                  {/* Module Addition */}
-                  <div className="mt-4">
-                    <h4 className="font-bold text-gray-800">Add Modules</h4>
-                    <input
-                      type="text"
-                      placeholder="Module Title"
-                      className="input input-bordered w-full mt-2 bg-gray-100 text-gray-800"
-                      value={newModule.title}
-                      onChange={(e) => setNewModule({ ...newModule, title: e.target.value })}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Module Description"
-                      className="input input-bordered w-full mt-2 bg-gray-100 text-gray-800"
-                      value={newModule.description}
-                      onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
-                    />
-                    <button onClick={handleAddModule} className="btn btn-primary mt-2">Add Module</button>
-                  </div>
-
-                  {/* Display added modules */}
-                  {newCourse.modules.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="font-bold text-gray-800">Added Modules:</h4>
-                      <ul>
-                        {newCourse.modules.map((module, index) => (
-                          <li key={index} className="flex justify-between items-center mt-2">
-                            <span>{module.title} - {module.description}</span>
-                            <button onClick={() => handleRemoveModule(index)} className="btn btn-error btn-xs">Remove</button>
-                          </li>
-                        ))}
-                      </ul>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-full ml-12 mr-12">
+              {courses.map((course, index) => (
+                <div
+                  key={course.id}
+                  className="card border-stone-950 bg-slate-100 shadow-xl flex flex-col p-4 transition-all duration-300 ease-in-out border-solid border-2 border-sky-500"
+                >
+                  <div className="card-body flex flex-col justify-between h-full">
+                    <h3 className="card-title text-lg font-semibold">
+                      {course.title}
+                    </h3>
+                    <p>Description: {course.description}</p>
+                    <p>Faculty: {renderAssignedTeacher(course.id)}</p>
+                    <p>Start Date: {course.startDate}</p>
+                    <div className="flex flex-nowrap mt-auto items-center">
+                      <div className="card-actions justify-end ml-16">
+                        <button
+                          type="button"
+                          onClick={() => handleViewDetails(course)} // On click, view details
+                          className="text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:focus:ring-cyan-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                        >
+                          View Details
+                        </button>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
-                <div className="items-center px-4">
-                  <button
-                    id="ok-btn"
-                    className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                    onClick={handleAddCourse}
-                  >
-                    Add Course
-                  </button>
-                  <button
-                    id="cancel-btn"
-                    className="mt-3 px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="details-view bg-white p-6 rounded-md shadow-md">
+            <h1 className="text-3xl font-bold mb-4">{selectedCourse.title}</h1>
+            <p className="text-lg mb-4">{selectedCourse.description}</p>
+            <p className="text-sm">Faculty: {renderAssignedTeacher(selectedCourse.id)}</p>
+            <p className="text-sm">Start Date: {selectedCourse.startDate}</p>
+            <p className="text-sm">End Date: {selectedCourse.endDate}</p>
+
+            <h2 className="text-xl font-bold mt-4">Modules</h2>
+            <table className="min-w-full border-collapse border border-gray-300 mt-2">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Title
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Description
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedCourse.modules && selectedCourse.modules.length > 0 ? (
+                  selectedCourse.modules.map((module, index) => (
+                    <tr key={index}>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {module.title}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {module.description}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      className="border border-gray-300 px-4 py-2"
+                      colSpan="2"
+                    >
+                      No modules available for this course.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Class Post Section */}
+            <div className="mt-6">
+              <h2 className="text-xl font-bold">Post an Announcement</h2>
+              <TextPosting onTextPost={(text) => handleTextPost(selectedCourse.id, text)} />
+              <div className="mt-6">
+                <h2 className="text-xl font-bold">Class Posts</h2>
+                {postsByCourse[selectedCourse.id]?.length > 0 ? (
+                  postsByCourse[selectedCourse.id].map((post) => (
+                    <div
+                      key={post.id}
+                      className="border p-4 rounded-md bg-white shadow-md mt-4"
+                    >
+                      <p>
+                        <strong>Posted on:</strong> {post.timestamp}
+                      </p>
+                      <p>{post.text}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p>No posts yet.</p>
+                )}
               </div>
             </div>
+
+            <button
+              onClick={() => setSelectedCourse(null)}
+              className="mt-6 btn btn-primary"
+            >
+              Back to Courses
+            </button>
           </div>
         )}
       </div>
@@ -276,4 +277,4 @@ const CourseManagement = () => {
   );
 };
 
-export default CourseManagement;
+export default teachercourseview;
