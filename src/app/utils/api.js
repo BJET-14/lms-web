@@ -107,6 +107,8 @@ export const api = {
     getCourseSchedule: (courseId) => apiCall('get', `/operations/courses/${courseId}/class-schedule`),
     enrollStudent: (courseId, studentData) => apiCall('post', `/operations/courses/${courseId}/enrollement`, studentData),
     getEnrollments: (courseId) => apiCall('get', `/operations/courses/${courseId}/enrollment`),
+    getCoursePost: (courseId) => apiCall('get', `/operations/courses/${courseId}/post`),
+    createCoursePost: (courseId, postData) => apiCall('post', `/operations/courses/${courseId}/post`, postData),
   },
   exams: {
     getCourseExams: (courseId) => apiCall('get', `/operations/courses/${courseId}/exams`),
@@ -239,6 +241,15 @@ export const courseService = {
 
   updateCourse: async (id, courseData) => {
     const response = await api.courses.updateCourse(id, courseData);
+    return response.data;
+  },
+
+  getCoursePost: async (courseId) => {
+    const response = await api.courses.getCoursePost(courseId);
+    return response.data;
+  },
+  createCoursePost: async (courseId, postData) => {
+    const response = await api.courses.createCoursePost(courseId, postData);
     return response.data;
   },
 };

@@ -22,6 +22,8 @@ const ExamManagementPage = () => {
   const [userId, setUserId] = useState(null);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [resultModal, setResultModal] = useState({ show: false, data: null });
+
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -120,13 +122,27 @@ const ExamManagementPage = () => {
   };
 
   const handleUploadResult = async (examId) => {
-    if (!selectedCourse || !file) return;
+    if (!selectedCourse || !file) {
+      toast.error("Please select a file to upload");
+      return;
+    }
     setLoading(true);
     try {
+      // Create a new FormData object
       const formData = new FormData();
+      
+      // Append the file to the FormData object with the key 'file'
       formData.append('file', file);
-      await examService.uploadExamResults(selectedCourse.id, examId, formData);
+      console.log(formData);
+
+      // Call the API function with courseId, examId, and formData
+      const response = await examService.uploadExamResults(selectedCourse.id, examId, formData);
+      
       toast.success("Result uploaded successfully");
+      console.log(response);
+      
+      // Reset the file input
+      setFile(null);
     } catch (error) {
       console.error("Error uploading result:", error);
       toast.error("Failed to upload result");
@@ -141,17 +157,21 @@ const ExamManagementPage = () => {
     try {
       const response = await downloadFunction(selectedCourse.id, examId);
       
-      let blob = response instanceof Blob ? response : response.data instanceof Blob ? response.data : new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      
-      let filename = 'download.xlsx';
-      const contentDisposition = response.headers?.['content-disposition'];
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-        if (filenameMatch) filename = filenameMatch[1];
+      if (downloadFunction === examService.getExamTemplate) {
+        let blob = response instanceof Blob ? response : response.data instanceof Blob ? response.data : new Blob([response], { type: 'text/csv' });
+        
+        let filename = 'template.csv';
+        const contentDisposition = response.headers?.['content-disposition'];
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+          if (filenameMatch) filename = filenameMatch[1];
+        }
+    
+        saveAs(blob, filename);
+        toast.success(successMessage);
+      } else if (downloadFunction === examService.getExamResult) {
+        setResultModal({ show: true, data: response });
       }
-  
-      saveAs(blob, filename);
-      toast.success(successMessage);
     } catch (error) {
       console.error(errorMessage, error);
       toast.error(errorMessage);
@@ -161,7 +181,7 @@ const ExamManagementPage = () => {
   };
 
   const handleDownloadTemplate = (examId) => handleDownload(examId, examService.getExamTemplate, "Template downloaded successfully", "Error downloading template");
-  const handleDownloadResult = (examId) => handleDownload(examId, examService.getExamResult, "Result downloaded successfully", "Error downloading result");
+  const handleDownloadResult = (examId) => handleDownload(examId, examService.getExamResult, "Result fetched successfully", "Error fetching result");
 
   if (!userRole) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -214,8 +234,17 @@ const ExamManagementPage = () => {
                         <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleDownloadTemplate(exam.id); }} disabled={loading}>
                           <Download size={16} />
                         </button>
-                        <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleUploadResult(exam.id); }} disabled={loading}>
+                        <label className="btn btn-ghost btn-xs" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="file"
+                            onChange={handleFileChange}
+                            accept=".csv"
+                            style={{ display: 'none' }}
+                          />
                           <Upload size={16} />
+                        </label>
+                        <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleUploadResult(exam.id); }} disabled={loading || !file}>
+                          Upload
                         </button>
                         <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleDownloadResult(exam.id); }} disabled={loading}>
                           <Eye size={16} />
@@ -238,6 +267,7 @@ const ExamManagementPage = () => {
         </div>
       </div>
 
+      {/* Create Exam Modal */}
       <input type="checkbox" id="create-exam-modal" className="modal-toggle" checked={showModal} onChange={() => setShowModal(!showModal)} />
       <div className="modal">
         <div className="modal-box">
@@ -294,8 +324,27 @@ const ExamManagementPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Result Modal */}
+      {resultModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Exam Result</h2>
+            <p><strong>Exam Name:</strong> {resultModal.data.examName}</p>
+            <p><strong>Exam Type:</strong> {resultModal.data.examType}</p>
+            <p><strong>Full Mark:</strong> {resultModal.data.fullMark}</p>
+            <p><strong>Highest Mark:</strong> {resultModal.data.highestMark}</p>
+            {/* Add more fields as needed */}
+            <button 
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setResultModal({ show: false, data: null })}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
 export default ExamManagementPage;
