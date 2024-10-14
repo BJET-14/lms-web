@@ -75,7 +75,7 @@ const Users = () => {
             <option value="firstName">First Name</option>
             <option value="lastName">Last Name</option>
           </select>
-          <button type="submit" className="btn btn-primary bg-blue-500 hover:bg-blue-600 text-white">Search</button>
+          <button type="submit" className="btn btn-primary bg-sky-500 hover:bg-sky-700 text-white">Search</button>
         </div>
       </form>
 

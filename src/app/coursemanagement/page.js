@@ -112,7 +112,7 @@ const CourseManagement = () => {
   };
 
   return (
-    <div className="flex py-6 h-full w-full text-zinc-950 bg-slate-200">
+    <div className="flex py-6 h-fit w-full text-zinc-950 bg-slate-200 course-screen" data-theme="light">
       <div className="w-full p-6 rounded-md shadow-md">
         <h2 className="text-2xl font-bold mb-4">Course Management</h2>
         <div className="flex justify-between mb-4">
@@ -143,7 +143,7 @@ const CourseManagement = () => {
               Search
             </button>
           </form>
-          <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">Add New Course</button>
+          <button onClick={() => setIsModalOpen(true)} className="btn btn-primary bg-sky-500 hover:bg-sky-700">Add New Course</button>
         </div>
         
         {/* Course Table */}
@@ -233,7 +233,7 @@ const CourseManagement = () => {
                       value={newModule.description}
                       onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
                     />
-                    <button onClick={handleAddModule} className="btn btn-primary mt-2">Add Module</button>
+                    <button onClick={handleAddModule} className="btn btn-primary mt-2 ">Add Module</button>
                   </div>
 
                   {/* Display added modules */}

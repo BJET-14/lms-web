@@ -213,11 +213,11 @@ const StudentCourseView = () => {
                     value={newPost}
                     onChange={(e) => setNewPost(e.target.value)}
                     placeholder="Write a new post..."
-                    className="w-full p-2 border rounded"
+                    className="w-full p-2 border rounded bg-slate-300"
                   />
                   <button
                     onClick={handlePostSubmit}
-                    className="mt-2 bg-blue-500 text-white p-2 rounded"
+                    className="mt-2 bg-sky-400 text-white p-2 rounded"
                   >
                     Post
                   </button>
@@ -234,7 +234,7 @@ const StudentCourseView = () => {
 
             <button
               onClick={() => setSelectedCourse(null)}
-              className="mt-6 btn btn-primary"
+              className="mt-6 btn btn-primary bg-sky-400"
             >
               Back to Courses
             </button>

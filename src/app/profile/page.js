@@ -224,7 +224,7 @@ const Profile = () => {
         </div>
         <button
           type="submit"
-          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-sky-700 mt-4"
+          className="bg-sky-500 hover:bg-sky-700 text-white px-4 py-2 rounded mt-4"
         >
           Save Profile
         </button>

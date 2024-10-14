@@ -197,7 +197,7 @@ const CourseDetails = () => {
         </div>
 
         <div className="mt-6">
-          <h4 className="font-bold mb-2 text-gray-800">Add Module</h4>
+          <h4 className="font-bold mb-2 text-gray-800 ">Add Module</h4>
           <input
             type="text"
             placeholder="Module Title"
@@ -212,7 +212,7 @@ const CourseDetails = () => {
             value={newModule.description}
             onChange={(e) => setNewModule({...newModule, description: e.target.value})}
           />
-          <button onClick={handleAddModule} className="btn btn-primary text-white">Add Module</button>
+          <button onClick={handleAddModule} className="btn btn-primary text-white bg-sky-500 hover:bg-sky-700">Add Module</button>
         </div>
 
         <div className="mt-6">
@@ -237,7 +237,7 @@ const CourseDetails = () => {
               <option key={index} value={slot}>{slot}</option>
             ))}
           </select>
-          <button onClick={handleScheduleCourse} className="btn btn-primary text-white">Add Schedule</button>
+          <button onClick={handleScheduleCourse} className="btn btn-primary text-white bg-sky-500 hover:bg-sky-700">Add Schedule</button>
         </div>
 
         <div className="mt-6">
@@ -254,7 +254,7 @@ const CourseDetails = () => {
               </option>
             ))}
           </select>
-          <button onClick={handleAssignTeacher} className="btn btn-primary text-white">Assign Teacher</button>
+          <button onClick={handleAssignTeacher} className="btn btn-primary text-white bg-sky-500 hover:bg-sky-700">Assign Teacher</button>
         </div>
       </div>
     </div>
