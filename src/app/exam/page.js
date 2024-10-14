@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { examService, courseService, userService } from '../utils/api';
 import { Plus, Download, Upload, Eye } from 'lucide-react';
+import { saveAs } from 'file-saver';
 
 const ExamManagementPage = () => {
   const [courses, setCourses] = useState([]);
@@ -127,18 +128,64 @@ const ExamManagementPage = () => {
   const handleDownloadTemplate = async (examId) => {
     if (!selectedCourse) return;
     try {
-      await examService.getExamTemplate(selectedCourse.id, examId);
-      console.log("Template downloaded");
+      const response = await examService.getExamTemplate(selectedCourse.id, examId);
+      
+      let blob;
+      let filename = 'template.xlsx';
+  
+      if (response instanceof Blob) {
+        blob = response;
+      } else if (response.data instanceof Blob) {
+        blob = response.data;
+      } else {
+        // If it's not already a Blob, create one
+        blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      }
+  
+      // Try to get filename from Content-Disposition header if available
+      const contentDisposition = response.headers?.['content-disposition'];
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+  
+      saveAs(blob, filename);
+      console.log("Template downloaded successfully");
     } catch (error) {
       console.error("Error downloading template:", error);
     }
   };
-
+  
   const handleDownloadResult = async (examId) => {
     if (!selectedCourse) return;
     try {
-      await examService.getExamResult(selectedCourse.id, examId);
-      console.log("Result downloaded");
+      const response = await examService.getExamResult(selectedCourse.id, examId);
+      
+      let blob;
+      let filename = 'result.xlsx';
+  
+      if (response instanceof Blob) {
+        blob = response;
+      } else if (response.data instanceof Blob) {
+        blob = response.data;
+      } else {
+        // If it's not already a Blob, create one
+        blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      }
+  
+      // Try to get filename from Content-Disposition header if available
+      const contentDisposition = response.headers?.['content-disposition'];
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+  
+      saveAs(blob, filename);
+      console.log("Result downloaded successfully");
     } catch (error) {
       console.error("Error downloading result:", error);
     }
