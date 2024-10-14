@@ -1,7 +1,8 @@
-'use client';
+"use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getAuthToken } from "../utils/api";
+import { useDropzone } from "react-dropzone"; // For drag-and-drop functionality
 
 const teachers = [
   "Ms. Johnson",
@@ -54,74 +55,64 @@ const TextPosting = ({ onTextPost }) => {
 const StudentCourseView = () => {
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [startDateFrom, setStartDateFrom] = useState("");
-  const [startDateTo, setStartDateTo] = useState("");
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null); // State to track selected course
+  const [posts, setPosts] = useState([]); // State to track all posts
+
+  const handleTextPost = (text) => {
+    const newPost = {
+      id: posts.length + 1,
+      text,
+      files: currentFiles,
+      timestamp: new Date().toLocaleString(),
+    };
+
+    setPosts([newPost, ...posts]); // Add new post to the posts list
+  };
 
   useEffect(() => {
-    // Retrieve student ID from local storage
-    const storedStudentId = localStorage.getItem('userId');
-    if (storedStudentId) {
-      setStudentId(storedStudentId);
-    } else {
-      console.error("Student ID not found in local storage");
-      // Handle the case where student ID is not available
-      // You might want to redirect to login page or show an error message
-    }
-  }, []);
-
-  const fetchCourses = async () => {
-    try {
-      const data = await courseService.getCourses({
-        title: searchQuery,
-        asPage: false,
-        page: 0,
-        size: 20,
-        startDateFrom,
-        startDateTo,
-      });
-      setCourses(data);
-      data.forEach(course => {
-        if (course.teacherId) {
-          fetchAssignedTeacherDetails(course.id, course.teacherId);
+    const fetchCourses = async () => {
+      try {
+        const authToken = getAuthToken();
+        if (!authToken) {
+          console.error("No authentication token found");
+          return;
         }
-      });
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-    }
-  };
 
-  const fetchAssignedTeacherDetails = async (courseId, teacherId) => {
-    try {
-      const teacherData = await userService.getUserById(teacherId);
-      setAssignedTeachers(prev => ({...prev, [courseId]: teacherData}));
-    } catch (error) {
-      console.error(`Error fetching assigned teacher details for course ${courseId}:`, error);
-    }
-  };
+        const response = await axios.get(
+          `http://localhost:8055/operations/courses?asPage=false&page=0&size=20&title=${searchQuery}`,
+          {
+            headers: {
+              accept: "*/*",
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+        setCourses(response.data);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      }
+    };
 
-  useEffect(() => {
     fetchCourses();
-  }, [searchQuery, startDateFrom, startDateTo]);
+  }, [searchQuery]);
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    fetchCourses();
+    const searchValue = e.target.search.value.trim();
+    setSearchQuery(searchValue);
   };
 
   const handleEnroll = (courseId) => {
-    setEnrolledCourses((prevEnrolledCourses) => [...prevEnrolledCourses, courseId]);
+    setEnrolledCourses((prevEnrolledCourses) => [
+      ...prevEnrolledCourses,
+      courseId,
+    ]);
     alert("Course Enrollment Successful!");
   };
 
   const handleViewDetails = (course) => {
-    setSelectedCourse(course);
-  };
-
-  const renderAssignedTeacher = (courseId) => {
-    const teacher = assignedTeachers[courseId];
-    return teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Not assigned';
+    setSelectedCourse(course); // Set the selected course to view details
   };
 
   return (
@@ -145,20 +136,6 @@ const StudentCourseView = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value.trim())}
                 />
-                <input
-                  type="date"
-                  placeholder="Start Date From"
-                  className="input input-bordered max-w-xs bg-slate-300 ml-2"
-                  value={startDateFrom}
-                  onChange={(e) => setStartDateFrom(e.target.value)}
-                />
-                <input
-                  type="date"
-                  placeholder="Start Date To"
-                  className="input input-bordered max-w-xs bg-slate-300 ml-2"
-                  value={startDateTo}
-                  onChange={(e) => setStartDateTo(e.target.value)}
-                />
                 <button type="submit" className="btn btn-success ml-4">
                   Search
                 </button>
@@ -166,7 +143,12 @@ const StudentCourseView = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-full ml-12 mr-12">
-              {courses.map((course) => {
+              {courses.map((course, index) => {
+                const truncatedDescription =
+                  course.description.length > 150
+                    ? course.description.substring(0, 150) + "...[See more]"
+                    : course.description;
+
                 const isEnrolled = enrolledCourses.includes(course.id);
 
                 return (
@@ -175,7 +157,9 @@ const StudentCourseView = () => {
                     className="card border-stone-950 bg-slate-100 shadow-xl flex flex-col p-4 transition-all duration-300 ease-in-out border-solid border-2 border-sky-500"
                   >
                     <div className="card-body flex flex-col justify-between h-full">
-                      <h3 className="card-title text-lg font-semibold">{course.title}</h3>
+                      <h3 className="card-title text-lg font-semibold">
+                        {course.title}
+                      </h3>
                       <p>Description: {truncatedDescription}</p>
                       <p>Faculty: {teachers[index % teachers.length]}</p>
                       <p>Start Date: {course.startDate}</p>
@@ -214,7 +198,7 @@ const StudentCourseView = () => {
                             onClick={() => handleEnroll(course.id)}
                             className={`text-white ${
                               isEnrolled
-                                ? "bg-green-500"
+                                ? "bg-slate-300"
                                 : "bg-gradient-to-r from-cyan-500 to-blue-500"
                             } hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:focus:ring-cyan-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2`}
                             disabled={isEnrolled}
@@ -233,10 +217,13 @@ const StudentCourseView = () => {
           <div className="details-view bg-white p-6 rounded-md shadow-md">
             <h1 className="text-3xl font-bold mb-4">{selectedCourse.title}</h1>
             <p className="text-lg mb-4">{selectedCourse.description}</p>
-            <p className="text-sm">Faculty: {teachers[courses.indexOf(selectedCourse) % teachers.length]}</p>
+            <p className="text-sm">
+              Faculty:{" "}
+              {teachers[courses.indexOf(selectedCourse) % teachers.length]}
+            </p>
             <p className="text-sm">Start Date: {selectedCourse.startDate}</p>
-            <p className="text-sm">End Date: {selectedCourse.endDate}</p>
 
+            {/* Display Modules in Table Format */}
             <h2 className="text-xl font-bold mt-4">Modules</h2>
             <table className="min-w-full border-collapse border border-gray-300 mt-2">
               <thead>
@@ -316,7 +303,7 @@ const StudentCourseView = () => {
             )}
 
             <button
-              onClick={() => setSelectedCourse(null)}
+              onClick={() => setSelectedCourse(null)} // Back to course list
               className="mt-6 btn btn-primary"
             >
               Back to Courses
