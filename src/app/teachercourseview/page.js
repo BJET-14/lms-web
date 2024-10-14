@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { getAuthToken } from "../utils/api";
+import { getAuthToken, userService } from "../utils/api";
 
 // Text Posting Component
 const TextPosting = ({ onTextPost }) => {
@@ -41,6 +41,7 @@ const teachercourseview = () => {
   const [selectedCourse, setSelectedCourse] = useState(null); // State to track selected course
   const [userId, setUserId] = useState(null);
   const [postsByCourse, setPostsByCourse] = useState({}); // State to hold posts for each course
+  const [assignedTeachers, setAssignedTeachers] = useState({}); // State to store teacher info by course
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -55,7 +56,7 @@ const teachercourseview = () => {
 
   const fetchCourses = async (userId) => {
     try {
-      const authToken = getAuthToken(); // You can replace this with your actual auth token fetching logic
+      const authToken = getAuthToken(); // Fetch the auth token
 
       const response = await axios.get(
         `http://localhost:8055/operations/courses?asPage=false&page=0&size=20&title=${searchQuery}&startDateFrom=${startDateFrom}&startDateTo=${startDateTo}`,
@@ -67,14 +68,32 @@ const teachercourseview = () => {
         }
       );
 
-      // Filter courses where the current teacher is assigned
+      // Set courses and fetch the assigned teacher for each course
       const filteredCourses = response.data.filter(
         (course) => String(course.teacherId) === String(userId)
       );
 
       setCourses(filteredCourses);
+
+      filteredCourses.forEach(course => {
+        if (course.teacherId) {
+          fetchAssignedTeacherDetails(course.id, course.teacherId);
+        }
+      });
     } catch (error) {
       console.error("Error fetching courses:", error);
+    }
+  };
+
+  const fetchAssignedTeacherDetails = async (courseId, teacherId) => {
+    try {
+      const teacherData = await userService.getUserById(teacherId);
+      setAssignedTeachers((prev) => ({
+        ...prev,
+        [courseId]: teacherData,
+      }));
+    } catch (error) {
+      console.error(`Error fetching assigned teacher details for course ${courseId}:`, error);
     }
   };
 
@@ -99,6 +118,11 @@ const teachercourseview = () => {
       ...prevPosts,
       [courseId]: [...(prevPosts[courseId] || []), newPost],
     }));
+  };
+
+  const renderAssignedTeacher = (courseId) => {
+    const teacher = assignedTeachers[courseId];
+    return teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Not assigned';
   };
 
   return (
@@ -153,7 +177,7 @@ const teachercourseview = () => {
                       {course.title}
                     </h3>
                     <p>Description: {course.description}</p>
-                    <p>Faculty: {course.teacherName}</p>
+                    <p>Faculty: {renderAssignedTeacher(course.id)}</p>
                     <p>Start Date: {course.startDate}</p>
                     <div className="flex flex-nowrap mt-auto items-center">
                       <div className="card-actions justify-end ml-16">
@@ -175,7 +199,7 @@ const teachercourseview = () => {
           <div className="details-view bg-white p-6 rounded-md shadow-md">
             <h1 className="text-3xl font-bold mb-4">{selectedCourse.title}</h1>
             <p className="text-lg mb-4">{selectedCourse.description}</p>
-            <p className="text-sm">Faculty: {selectedCourse.teacherName}</p>
+            <p className="text-sm">Faculty: {renderAssignedTeacher(selectedCourse.id)}</p>
             <p className="text-sm">Start Date: {selectedCourse.startDate}</p>
             <p className="text-sm">End Date: {selectedCourse.endDate}</p>
 
