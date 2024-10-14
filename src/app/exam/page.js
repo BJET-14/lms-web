@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { examService, courseService, userService } from '../utils/api';
 import { Plus, Download, Upload, Eye } from 'lucide-react';
 import { saveAs } from 'file-saver';
+import { toast } from 'react-toastify';
 
 const ExamManagementPage = () => {
   const [courses, setCourses] = useState([]);
@@ -20,7 +21,7 @@ const ExamManagementPage = () => {
   const [userRole, setUserRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const [file, setFile] = useState(null);
-  const [openExamId, setOpenExamId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -44,39 +45,41 @@ const ExamManagementPage = () => {
       setUserRole(userDetails.role);
     } catch (error) {
       console.error("Error fetching user role:", error);
+      toast.error("Failed to fetch user role");
     }
   };
 
   const fetchCourses = async () => {
+    setLoading(true);
     try {
       let coursesData;
       if (userRole === 'ADMIN') {
         coursesData = await courseService.getCourses();
       } else if (userRole === 'TEACHER') {
         const coursesResponse = await courseService.getCourses();
-
-        // First, filter out courses without a teacherId
-        const coursesWithTeacher = coursesResponse.filter(course => course.teacherId != null);
-        
-        // Then, filter courses based on the userId
-        const filteredCourses = coursesWithTeacher.filter(course => String(course.teacherId) === String(userId));
-
-        coursesData = filteredCourses;
+        coursesData = coursesResponse.filter(course => course.teacherId && String(course.teacherId) === String(userId));
       } else if (userRole === 'STUDENT') {
         coursesData = await courseService.getEnrollments(userId);
       }
       setCourses(coursesData);
     } catch (error) {
       console.error("Error fetching courses:", error);
+      toast.error("Failed to fetch courses");
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchExams = async (courseId) => {
+    setLoading(true);
     try {
       const examsData = await examService.getCourseExams(courseId);
       setExams(prevExams => ({ ...prevExams, [courseId]: examsData }));
     } catch (error) {
       console.error(`Error fetching exams for course ${courseId}:`, error);
+      toast.error("Failed to fetch exams");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -87,7 +90,7 @@ const ExamManagementPage = () => {
 
   const handleAddExam = async () => {
     if (!selectedCourse) return;
-
+    setLoading(true);
     try {
       const newExamData = await examService.addCourseExam(selectedCourse.id, newExam);
       setExams(prevExams => ({
@@ -103,8 +106,12 @@ const ExamManagementPage = () => {
         type: 'Daily'
       });
       setShowModal(false);
+      toast.success("Exam added successfully");
     } catch (error) {
       console.error("Error adding new exam:", error);
+      toast.error("Failed to add exam");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,86 +121,47 @@ const ExamManagementPage = () => {
 
   const handleUploadResult = async (examId) => {
     if (!selectedCourse || !file) return;
-    
+    setLoading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
       await examService.uploadExamResults(selectedCourse.id, examId, formData);
-      console.log("Result uploaded successfully");
+      toast.success("Result uploaded successfully");
     } catch (error) {
       console.error("Error uploading result:", error);
+      toast.error("Failed to upload result");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDownloadTemplate = async (examId) => {
+  const handleDownload = async (examId, downloadFunction, successMessage, errorMessage) => {
     if (!selectedCourse) return;
+    setLoading(true);
     try {
-      const response = await examService.getExamTemplate(selectedCourse.id, examId);
+      const response = await downloadFunction(selectedCourse.id, examId);
       
-      let blob;
-      let filename = 'template.xlsx';
-  
-      if (response instanceof Blob) {
-        blob = response;
-      } else if (response.data instanceof Blob) {
-        blob = response.data;
-      } else {
-        // If it's not already a Blob, create one
-        blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      }
-  
-      // Try to get filename from Content-Disposition header if available
+      let blob = response instanceof Blob ? response : response.data instanceof Blob ? response.data : new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      
+      let filename = 'download.xlsx';
       const contentDisposition = response.headers?.['content-disposition'];
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
+        if (filenameMatch) filename = filenameMatch[1];
       }
   
       saveAs(blob, filename);
-      console.log("Template downloaded successfully");
+      toast.success(successMessage);
     } catch (error) {
-      console.error("Error downloading template:", error);
-    }
-  };
-  
-  const handleDownloadResult = async (examId) => {
-    if (!selectedCourse) return;
-    try {
-      const response = await examService.getExamResult(selectedCourse.id, examId);
-      
-      let blob;
-      let filename = 'result.xlsx';
-  
-      if (response instanceof Blob) {
-        blob = response;
-      } else if (response.data instanceof Blob) {
-        blob = response.data;
-      } else {
-        // If it's not already a Blob, create one
-        blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      }
-  
-      // Try to get filename from Content-Disposition header if available
-      const contentDisposition = response.headers?.['content-disposition'];
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      }
-  
-      saveAs(blob, filename);
-      console.log("Result downloaded successfully");
-    } catch (error) {
-      console.error("Error downloading result:", error);
+      console.error(errorMessage, error);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const toggleExamDetails = (examId) => {
-    setOpenExamId(openExamId === examId ? null : examId);
-  };
+  const handleDownloadTemplate = (examId) => handleDownload(examId, examService.getExamTemplate, "Template downloaded successfully", "Error downloading template");
+  const handleDownloadResult = (examId) => handleDownload(examId, examService.getExamResult, "Result downloaded successfully", "Error downloading result");
 
   if (!userRole) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -206,18 +174,22 @@ const ExamManagementPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-base-200 rounded-lg shadow p-4">
           <h2 className="text-xl font-semibold mb-4 text-base-content">Courses</h2>
-          <ul className="menu bg-base-100 w-full rounded-box">
-            {courses.map(course => (
-              <li key={course.id}>
-                <a 
-                  className={selectedCourse?.id === course.id ? 'active' : ''}
-                  onClick={() => handleCourseSelect(course)}
-                >
-                  {course.title}
-                </a>
-              </li>
-            ))}
-          </ul>
+          {loading ? (
+            <div className="flex justify-center items-center h-32">Loading...</div>
+          ) : (
+            <ul className="menu bg-base-100 w-full rounded-box">
+              {courses.map(course => (
+                <li key={course.id}>
+                  <a 
+                    className={selectedCourse?.id === course.id ? 'active' : ''}
+                    onClick={() => handleCourseSelect(course)}
+                  >
+                    {course.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="bg-base-200 rounded-lg shadow p-4">
@@ -229,7 +201,9 @@ const ExamManagementPage = () => {
               </label>
             )}
           </div>
-          {selectedCourse && (
+          {loading ? (
+            <div className="flex justify-center items-center h-32">Loading...</div>
+          ) : selectedCourse ? (
             <ul className="menu bg-base-100 w-full rounded-box">
               {exams[selectedCourse.id]?.map(exam => (
                 <li key={exam.id}>
@@ -237,13 +211,13 @@ const ExamManagementPage = () => {
                     <summary className="flex justify-between items-center">
                       <span>{exam.name}</span>
                       <div className="flex">
-                        <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleDownloadTemplate(exam.id); }}>
+                        <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleDownloadTemplate(exam.id); }} disabled={loading}>
                           <Download size={16} />
                         </button>
-                        <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleUploadResult(exam.id); }}>
+                        <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleUploadResult(exam.id); }} disabled={loading}>
                           <Upload size={16} />
                         </button>
-                        <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleDownloadResult(exam.id); }}>
+                        <button className="btn btn-ghost btn-xs" onClick={(e) => { e.stopPropagation(); handleDownloadResult(exam.id); }} disabled={loading}>
                           <Eye size={16} />
                         </button>
                       </div>
@@ -258,6 +232,8 @@ const ExamManagementPage = () => {
                 </li>
               ))}
             </ul>
+          ) : (
+            <div className="flex justify-center items-center h-32">Select a course to view exams</div>
           )}
         </div>
       </div>
@@ -312,7 +288,9 @@ const ExamManagementPage = () => {
           </select>
           <div className="modal-action">
             <label htmlFor="create-exam-modal" className="btn btn-ghost">Cancel</label>
-            <button onClick={handleAddExam} className="btn btn-primary">Create Exam</button>
+            <button onClick={handleAddExam} className="btn btn-primary" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Exam'}
+            </button>
           </div>
         </div>
       </div>
